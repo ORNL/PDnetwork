@@ -1,0 +1,123 @@
+#app {
+  border: 1px dashed black;
+  width: 95vw;
+  height: 95vh;
+}
+
+#network-half {
+  border: 1px solid red;
+  height: 50%;
+  display: flex;
+}
+
+#network-selector {
+  border: 1px solid green;
+  flex: 1;
+}
+
+#components {
+  border: 1px solid magenta;
+  height: 15%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#component-select {
+  width: 50%;
+  margin-left: 1em;
+  font-size: 1em;
+}
+
+#selected {
+  border: 1px solid yellow;
+  height: 85%;
+  width: 100%;
+}
+
+#network {
+  flex: 4;
+}
+
+#info-half {
+  height: 50%;
+  display: flex;
+}
+
+#info-content {
+  width: 84%;
+}
+
+#tabs {
+  height: 10%;
+  background-color: gray;
+}
+
+#info {
+  height: 89%;
+  width: 100%;
+}
+
+#info-filters {
+  width: 17%;
+}
+
+#space {
+  height: 10%;
+  background-color: black;
+}
+
+#filters {
+  height: 90%;
+  padding: 0.5em;
+  display: flex;
+  justify-content: center;
+}
+
+#mindiv {
+  margin: 0.5em;
+}
+
+#maxdiv {
+  margin: 0.5em;
+}
+
+input {
+  max-width: 3.5vw;
+  text-align: center;
+}
+
+#year-filter {
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: silver;
+  border-radius: 0.5em;
+  padding: 0.5em;
+}
+
+#year-filter p {
+  margin: 0;
+  font-weight: 600;
+}
+
+#year-inputs {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.author {
+  margin-right: 0.25em;
+}
+
+.author:hover {
+  color: lime;
+}
+
+.author-cell {
+  display: flex;
+}

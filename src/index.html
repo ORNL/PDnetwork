@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publication-Author List Viewer</title>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tabulator-tables/dist/css/tabulator.min.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+  <div id="network-half">
+    <div id="network-selector">
+      <div id="components">Component: <select id="component-select"></select></div>
+      <div id="selected">Selected</div>
+    </div>
+    <div id="network"></div>
+  </div>
+  <div id="info-half">
+    <div id="info-content">
+      <div id="tabs">Tabs</div>
+      <div id="info"></div>
+    </div>
+    <div id="info-filters">
+      <div id="space"></div>
+      <div id="filters">
+        <div id="year-filter">
+          <p>Year</p>
+          <div id="year-inputs">
+            <div id="mindiv">
+              <label for="minyear">Min</label>
+              <input id="minyear" type="number" min=2000 max=2019 value=2000 />
+            </div>
+
+            <div id="maxdiv">
+              <label for="maxyear">Max</label>
+              <input id="maxyear" type="number" min=2000 max=2019 value=2019 />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/tabulator-tables/dist/js/tabulator.min.js"></script>
+</body>
+</html>
