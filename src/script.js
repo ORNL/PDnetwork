@@ -6,31 +6,11 @@ import { connectedComponents } from 'graphology-components';
 import peri from "./peri.json"
 import nodeinfo from "./nodeinfo.json"
 
+import { oneName, transformData, zoomToPos } from "./utils.js"
+
 import './style.css';
 
-function oneName(name) {
-  return name.split(";").sort((a, b) => b.length - a.length)[0]
-}
-
-function transformData(data) {
-  let transformed = [];
-  let keys = Object.keys(data);
-  let length = Object.keys(data[keys[0]]).length
-
-  for (let i = 0; i < length; i++) {
-      let row = {};
-      keys.forEach(key => {
-          row[key] = data[key][i];
-      });
-      transformed.push(row);
-  }
-
-  return transformed;
-}
-
-function set_components_from_pa(pa) {
-  let ai = pa["ai"]
-
+function set_components_from_ai(ai) {
   let networks = []
 
   let nodes = []
@@ -98,7 +78,7 @@ function set_components_from_pa(pa) {
     graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
     graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
   } );
-``
+
   let components = connectedComponents(graph);
   components.sort((a, b) => b.length - a.length);
   for (let i = 0; i < components.length; i++) {
@@ -139,10 +119,10 @@ function updateYears(table) {
   table.addFilter("py", ">=", minval);
   table.addFilter("py", "<=", maxval);
 
-  updateGraph(table);
+  updateNetworks(table);
 }
 
-function updateGraph(table) {
+function updateNetworks(table) {
   let filters = table.getFilters();
   
   let geq = 2000;
@@ -156,7 +136,7 @@ function updateGraph(table) {
     }
   }
 
-  let pa_list = JSON.parse(peri);
+  let pa_list = window.pa_list;
   let newlist = {}
   for (const [key, value] of Object.entries(pa_list.py)) {
     if (value >= geq && value <= leq) {
@@ -164,23 +144,23 @@ function updateGraph(table) {
     }
   }
 
-  window.components = networkyears_from_ai(newlist);
+  set_components_from_ai(newlist);
   window.component = 0;
-  updateNetwork()
+  renderNetworks()
 }
 
 function updateComponent() {
   let select = $("#component-select").get(0);
   window.component = select.options[select.selectedIndex].value;
 
-  updateNetwork()
+  renderNetworks()
 }
 
-function updateNetworks() {
+function renderNetworks() {
   if (window.renderer) { 
     window.renderer.kill()
   }
-  
+
   window.renderer = new Sigma(window.components[window.component], $("#network").get(0), {
     labelRenderedSizeThreshold: 1, 
     labelDensity: 0.5,
@@ -190,7 +170,7 @@ function updateNetworks() {
   window.renderer.refresh();
 }
 
-function authorFormatter(cellname, params, onRendered) {
+function authorCell(cellname, params, onRendered) {
   let names = cellname.getValue().split("; ")
   let cell = document.createElement("div")
   cell.className = "author-cell"
@@ -219,38 +199,29 @@ function authorFormatter(cellname, params, onRendered) {
   return cell
 }
 
-function addListeners() {
-  $("#minyear").get(0).addEventListener("change", () => updateYears(table));
-  $("#maxyear").get(0).addEventListener("change", () => updateYears(table));
-  $("#component-select").get(0).addEventListener("change", () => updateComponent());
-}
-
 $(document).ready(function() {
   window.pa_list = JSON.parse(peri)
   let transposed = transformData(window.pa_list)
-  
-  set_components_from_pa(window.pa_list)
+
+  set_components_from_ai(window.pa_list["ai"])
 
   window.component = 0
-  updateNetworks()
+  renderNetworks()
 
   window.table = new Tabulator("#info", {
     data: transposed,
     layout: "fitData",
     columns: [
-      { title: "Authors", field: "af", width: "22%", formatter: authorFormatter },
+      { title: "Authors", field: "af", width: "22%", formatter: authorCell },
       { title: "Title", field: "ti", width: "50%" },
       { title: "Year", field: "py",  width: "13%" },
       { title: "Source", field: "so", width: "14%" },
     ]
   })
 
-  window.table.on("tableBuilt", addListeners)
-});
-
-//nodelink.addEventListener("click", zoomToPos.bind(null, nattr.x, nattr.y))
-export function zoomToPos(x, y) {
-  window.renderer.camera.x = x
-  window.renderer.camera.y = y
-  window.renderer.refresh()
-}
+  window.table.on("tableBuilt", () => {
+    $("#minyear").get(0).addEventListener("change", () => updateYears(table));
+    $("#maxyear").get(0).addEventListener("change", () => updateYears(table));
+    $("#component-select").get(0).addEventListener("change", () => updateComponent());
+  });
+})
