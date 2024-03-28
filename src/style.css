@@ -1,24 +1,43 @@
 #app {
   border: 1px dashed black;
-  width: 95vw;
-  height: 95vh;
+  width: 98vw;
+  display: flex;
 }
 
 #network-half {
   border: 1px solid red;
-  height: 50%;
+  min-width: 99vh;
   display: flex;
+  flex-direction: column;
 }
 
 #network-selector {
   border: 1px solid green;
+  height: 5vh;
+  display: flex;
+}
+
+#nodesearchdiv {
   flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+#nodesearch {
+  width: 10vw;
+  max-width: 10vw;
+  margin-left: 0.5em;
+}
+
+#site-info {
+  height: 100%;
+  border: 1px solid yellowgreen;
 }
 
 #components {
   border: 1px solid magenta;
-  height: 15%;
-  width: 100%;
+  flex: 1;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -32,47 +51,59 @@
 
 #selected {
   border: 1px solid yellow;
-  height: 85%;
-  width: 100%;
+  height: 32vh;
+  margin-top: 2vh;
+  margin-left: 1vh;
 }
 
 #network {
-  flex: 4;
-}
-
-#info-half {
-  height: 50%;
-  display: flex;
+  flex: 1;
 }
 
 #info-content {
-  width: 84%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-#tabs {
-  height: 10%;
-  background-color: gray;
+#info-stuff {
+  display: flex;
+  flex-direction: column;
+  width: 99%;
+}
+
+#info-half {
+  flex-direction: column;
+  height: 97vh;
+  flex: 1;
 }
 
 #info {
-  height: 89%;
-  width: 100%;
+  height: 52vh;
+  overflow: hidden;
 }
 
+#tabs {
+  border: 1px dashed gray;
+}
+
+
 #info-filters {
-  width: 17%;
+  flex: 1;
+  display: flex;
 }
 
 #space {
-  height: 10%;
+  flex: 1;
   background-color: black;
 }
 
 #filters {
+  margin-left: 1em;
+  margin-right: 2em;
   height: 90%;
-  padding: 0.5em;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
 }
 
 #mindiv {
@@ -89,14 +120,14 @@ input {
 }
 
 #year-filter {
-  width: 100%;
   height: fit-content;
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: silver;
   border-radius: 0.5em;
-  padding: 0.5em;
+  padding-left: 1em;
+  padding-right: 1em;
 }
 
 #year-filter p {
@@ -120,4 +151,5 @@ input {
 
 .author-cell {
   display: flex;
+  flex-wrap: wrap;
 }
