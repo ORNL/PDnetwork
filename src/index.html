@@ -15,35 +15,39 @@
     <div id="network-selector">
       <div id="site-info">Site info</div>
       <div id="components">Component: <select id="component-select"></select></div>
+      <div id="nodesearchdiv"><p>Scientist search</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist></div>
     </div>
     <div id="network"></div>
   </div>
   <div id="info-half">
     <div id="info-stuff">
       <div id="info-filters">
-        <div id="filters">
-          <div id="year-filter">
-            <p>Year</p>
-            <div id="year-inputs">
-              <div id="mindiv">
-                <label for="minyear">Min</label>
-                <input id="minyear" type="number" min=2000 max=2019 value=2000 />
-              </div>
-
-              <div id="maxdiv">
-                <label for="maxyear">Max</label>
-                <input id="maxyear" type="number" min=2000 max=2019 value=2019 />
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div id="nodesearchdiv"><p>Scientist search</p><datalist id="nodesearch" type="text" placeholder="Name"></datalist></div>
       </div>
     <div id="selected">Selected</div>
+    </div>
     <div id="info-content">
-        <div id="tabs">Tabs</div>
-        <div id="info"></div>
+        <div id="tabs">
+          <div id="infotab" class="tab activebutton">Paper Table</div>
+          <div id="indextab" class="tab">Node Index</div>
+        </div>
+        <div id="infoholder" class="activetab"><div id="info"></div></div>
+        <div id="indexholder" class="inactivetab"><div id="index"></div></div>
+    </div>
+    <div id="filters">
+      <div id="year-filter">
+        <p>Year</p>
+        <div id="year-inputs">
+          <div id="mindiv">
+            <label for="minyear">Min</label>
+            <input id="minyear" type="number" min=2000 max=2019 value=2000 />
+          </div>
+
+          <div id="maxdiv">
+            <label for="maxyear">Max</label>
+            <input id="maxyear" type="number" min=2000 max=2019 value=2019 />
+          </div>
+        </div>
+      </div>
     </div>
     </div>
   </div>

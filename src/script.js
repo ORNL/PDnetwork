@@ -6,8 +6,16 @@ import './style.css';
 
 function searchScientist(input) {
   let name = input.value
-  input.value = ""
-  console.log(name)
+
+  let nid = window.nameToId[name]
+  if (nid) {
+    let nattr = window.renderer.nodeDataCache[parseInt(nid)]
+    input.value = ""
+    zoomToPos(nattr.x, nattr.y)
+  }
+  else {
+    console.log(name + " not found")
+  }
 }
 
 function updateYears(table) {
@@ -104,14 +112,48 @@ $(document).ready(function() {
     ]
   })
 
+  window.tab = "info"
+
   window.table.on("tableBuilt", () => {
     $("#minyear").get(0).addEventListener("change", () => updateYears(table));
     $("#maxyear").get(0).addEventListener("change", () => updateYears(table));
     $("#component-select").get(0).addEventListener("change", () => updateComponent());
-    $("#nodesearch").get(0).addEventListener("keyup", (e) => {
+    $("#nodesearchfield").get(0).addEventListener("keyup", (e) => {
       if (e.key == "Enter" || e.keyCode == 13) {
         searchScientist(e.target);
       }
     });
+    $("#infotab").get(0).addEventListener("click", () => {
+      if (window.tab != "info") {
+        window.tab = "info"
+        let active = $(".activetab")
+        active.removeClass()
+        active.addClass("inactivetab")
+
+        let activeButton = $(".activebutton")
+        activeButton.removeClass()
+        activeButton.addClass("tab")
+
+        $("#infoholder").removeClass()
+        $("#infoholder").addClass("activetab")
+        $("#infotab").addClass("activebutton")
+      }
+    })
+    $("#indextab").get(0).addEventListener("click", () => {
+      if (window.tab != "index") {
+        window.tab = "index"
+        let active = $(".activetab")
+        active.removeClass()
+        active.addClass("inactivetab")
+
+        let activeButton = $(".activebutton")
+        activeButton.removeClass()
+        activeButton.addClass("tab")
+
+        $("#indexholder").removeClass()
+        $("#indexholder").addClass("activetab")
+        $("#indextab").addClass("activebutton")
+      }
+    })
   });
 })

@@ -3,6 +3,8 @@ import subgraph from 'graphology-operators/subgraph';
 import Graph from "graphology";
 import { connectedComponents } from 'graphology-components';
 
+import { degreeCentrality } from 'graphology-metrics/centrality/degree'
+
 import nodeinfo from "./nodeinfo.json"
 
 export function oneName(name) {
@@ -28,9 +30,40 @@ export function transformData(data) {
   return transformed;
 }
 
+function authorCell2(cellname, params, onRendered) {
+  //console.log(cellname.getValue(), cellname["_cell"].row.position)
+  let names = cellname.getValue().split("; ")
+  let cell = document.createElement("div")
+  cell.className = "author-cell"
+
+  for (let i = 0; i < names.length; i += 1) {
+    let author = document.createElement("div")
+    author.className = "author"
+    author.innerHTML = `${names[i]}; `
+    author.key = i
+    author.setAttribute("node", parseInt(window.nameToId[names[i]]))//window.pa_list["ai"][cellname["_cell"].row.position - 1][i])
+    cell.appendChild(author)
+  }
+
+  onRendered(() => {
+    let authors = cellname.getElement().children[0].children 
+
+    for (let j = 0; j < authors.length; j += 1)
+      authors[j].addEventListener("click", () => {
+        console.log(authors[j])
+        let node = authors[j].getAttribute("node")
+        let nattr = window.renderer.nodeDataCache[node]
+        zoomToPos(nattr.x, nattr.y)
+      })
+    })
+
+  return cell
+}
+
 export function zoomToPos(x, y) {
   window.renderer.camera.x = x
   window.renderer.camera.y = y
+  window.renderer.camera.ratio = 0.1
   window.renderer.refresh()
 }
 
@@ -109,6 +142,8 @@ export function set_components_from_ai(ai) {
     gdata.nodes.push(newnode)
   }
 
+  window.nameToId = {}
+
   let graph = Graph.from(gdata)
   graph.forEachNode( node => {
     graph.setNodeAttribute(node, 'label', oneName(nodeinfo[node][0]).trim())
@@ -116,6 +151,8 @@ export function set_components_from_ai(ai) {
     graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
     graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
     graph.setNodeAttribute(node, 'size', 3)
+    window.nameToId[nodeinfo[node][0]] = node
+    window.nameToId[ oneName(nodeinfo[node][0]).trim()] = node
   } );
 
   let components = connectedComponents(graph);
@@ -147,4 +184,48 @@ export function set_components_from_ai(ai) {
   $("#component-select").get(0).innerHTML = str
 
   window.components = networks
+
+  setupNodeSearch(networks[0])
+  setupCentralityTables(networks[0])
+}
+
+function setupNodeSearch(component) {
+  console.log("SetupNodeSearch")
+
+  let searchoptions = document.getElementById("nodesearch")
+
+  let nodes = component.nodes()
+  for (let i = 0; i < nodes.length; i += 1) {
+    let op = document.createElement("option")
+    op.value = nodeinfo[nodes[i]][0]
+    searchoptions.appendChild(op)  
+  }
+}
+
+function setupCentralityTables(component) {
+  // degree centrality
+  let ranking = []
+  let nodes = component.nodes()
+  for (let i = 0; i < nodes.length; i += 1) {
+    let nattr = component._nodes.get(nodes[i])
+    //console.log(nattr)
+    let obj = {}
+    obj.name = nattr.attributes["label"]
+    obj.degree = nattr.outDegree + nattr.inDegree
+    ranking.push(obj)
+  }
+
+  var columns = [
+    { title: "Name", field: "name", formatter: authorCell2, resizable: false },
+    { title: "Degree", field: "degree", resizable: false }
+  ];
+
+  let nodeTable = new Tabulator("#index", {
+    data: ranking,
+    columns: columns,
+    layout: "fitData",
+    initialSort:[
+      {column:"name", dir:"asc"}
+  ]
+  });
 }
