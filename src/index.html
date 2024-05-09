@@ -13,41 +13,42 @@
 <div id="app">
   <div id="network-half">
     <div id="network-selector">
-      <div id="site-info">Site info</div>
-      <div id="components">Component: <select id="component-select"></select></div>
-      <div id="nodesearchdiv"><p>Scientist search</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist></div>
+      <a id="site-info" href="info.html" target="_blank">ⓘ</a>
+      <h1>Peridynamics Co-Authorship Network</h1>
+      <div id="year-filter">
+        Years
+        <div id="year-inputs">
+          <div id="mindiv">
+            <input id="minyear" type="number" min=2000 max=2023 value=2000 />
+            <label for="minyear">Min</label>
+          </div>
+
+          <div id="maxdiv">
+            <input id="maxyear" type="number" min=2000 max=2023 value=2023 />
+            <label for="maxyear">Max</label>
+          </div>
+        </div>
+      </div>
     </div>
     <div id="network"></div>
   </div>
   <div id="info-half">
-    <div id="info-stuff">
-      <div id="info-filters">
-      </div>
-    <div id="selected">Selected</div>
-    </div>
+    <div id="nodesearchdiv"><p>Scientist search</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist></div>
+    <div id="selected"></div>
     <div id="info-content">
         <div id="tabs">
-          <div id="infotab" class="tab activebutton">Paper Table</div>
-          <div id="indextab" class="tab">Node Index</div>
+          <button id="indextab" class="tab">Node Index</button>
+          <button id="infotab" class="tab activebutton">All Papers</button>
+          <div id="componentpapers"></div>
+          <div id="tabsspace"></div>
+          <button id="neighbortab" class="tab2 hiddenbutton">Co-Authors</button>
+          <button id="papertab" class="tab2 hiddenbutton">Publications</button>
         </div>
-        <div id="infoholder" class="activetab"><div id="info"></div></div>
         <div id="indexholder" class="inactivetab"><div id="index"></div></div>
+        <div id="infoholder" class="activetab"><div id="info"></div></div>
+        <div id="neighborholder" class="inactivetab"><div id="neighbor"></div></div>
+        <div id="paperholder" class="inactivetab"><div id="paper"></div></div>
     </div>
-    <div id="filters">
-      <div id="year-filter">
-        <p>Year</p>
-        <div id="year-inputs">
-          <div id="mindiv">
-            <label for="minyear">Min</label>
-            <input id="minyear" type="number" min=2000 max=2019 value=2000 />
-          </div>
-
-          <div id="maxdiv">
-            <label for="maxyear">Max</label>
-            <input id="maxyear" type="number" min=2000 max=2019 value=2019 />
-          </div>
-        </div>
-      </div>
     </div>
     </div>
   </div>

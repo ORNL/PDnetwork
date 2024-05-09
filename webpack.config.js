@@ -18,8 +18,14 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './src/index.html',
+      filename: 'index.html',
       favicon: './src/favicon.ico'
     }),
+    new HtmlWebpackPlugin({
+      template: './src/info.html',
+      filename: 'info.html',
+      favicon: './src/favicon.ico'
+    })
   ],
   module: {
     rules: [

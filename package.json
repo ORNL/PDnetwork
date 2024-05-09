@@ -6,6 +6,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sigma/node-border": "^3.0.0-beta.3",
     "graphology": "^0.25.4",
     "graphology-components": "^1.5.4",
     "graphology-layout-forceatlas2": "^0.10.1",
