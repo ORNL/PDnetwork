@@ -13,32 +13,36 @@
 <div id="app">
   <div id="network-half">
     <div id="network-selector">
-      <a id="site-info" href="info.html" target="_blank">ⓘ</a>
-      <h1>Peridynamics Co-Authorship Network</h1>
-      <div id="year-filter">
-        Years
-        <div id="year-inputs">
-          <div id="mindiv">
-            <input id="minyear" type="number" min=2000 max=2023 value=2000 />
-            <label for="minyear">Min</label>
-          </div>
-
-          <div id="maxdiv">
-            <input id="maxyear" type="number" min=2000 max=2023 value=2023 />
-            <label for="maxyear">Max</label>
-          </div>
-        </div>
-      </div>
+      <h1 id="title">Co-Authorship Network Analysis Tool</h1>
+      <div id="components">Component:<select id="component-select"></select><button id="leftcomponent">🡐</button><button id="rightcomponent">🡒</button></div>
     </div>
     <div id="network"></div>
   </div>
   <div id="info-half">
-    <div id="nodesearchdiv"><p>Scientist search</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist></div>
+    <div id="topright">
+      <div id="nodesearchdiv">
+        <p>Scientist selector</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist>
+      </div>
+      <div id="year-filter">
+        Years
+        <div id="year-inputs">
+          <div id="mindiv">
+            <input id="minyear" type="number" min=2022 max=2024 value=2022 />
+            <label for="minyear">to</label>
+          </div>
+
+          <div id="maxdiv">
+            <input id="maxyear" type="number" min=2022 max=2024 value=2024 />
+          </div>
+        </div>
+      </div>
+      <a id="site-info" href="info.html" target="_blank">ⓘ</a>
+    </div>
     <div id="selected"></div>
     <div id="info-content">
         <div id="tabs">
-          <button id="indextab" class="tab">Node Index</button>
-          <button id="infotab" class="tab activebutton">All Papers</button>
+          <button id="indextab" class="tab">Component Nodes</button>
+          <button id="infotab" class="tab activebutton">All Publications</button>
           <div id="componentpapers"></div>
           <div id="tabsspace"></div>
           <button id="neighbortab" class="tab2 hiddenbutton">Co-Authors</button>

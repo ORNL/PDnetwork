@@ -35,11 +35,30 @@ export function transformData(data) {
   return transformed;
 }
 
-export function globalMetrics(component) {
+function numPaperWithAuthors(nodes) {
+  let authorArr = Object.values(window.pa_list.ai)
+  let papers = authorArr.filter(x => nodes.includes(String(x[0])))
+  return papers.length;
+}
+
+export function componentMetrics(component) {
   let stats = []
-  stats.push("<b>Number of authors:</b> " + component.nodes().length)
-  stats.push("<b>Number of papers:</b> " + Object.keys(window.pa_list.af).length)
+  let nodes = component.nodes()
+
+  stats.push("<b>Number of authors:</b> " + nodes.length)
+  stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
   stats.push("<b>Number of links:</b> " + component.edges().length)
+
+  return stats
+}
+
+export function globalMetrics() {
+  let stats = []
+  let nodes = window.graph.nodes()
+
+  stats.push("<b>Number of authors:</b> " + nodes.length)
+  stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
+  stats.push("<b>Number of links:</b> " + window.graph.edges().length)
 
   return stats
 }
@@ -49,10 +68,9 @@ export function localMetrics(component, node) {
   let stats = []
   stats.push("<b>All names:</b> " + node.attributes["fullname"])
   stats.push("<b>Number of collaborators:</b> " + node.undirectedDegree)
-  stats.push("<b>Number of collab papers:</b> " + node.attributes["wdegree"])
-  stats.push("<b>Closeness:</b> " + parseFloat(node.attributes["close"]).toFixed(4))
-  stats.push("<b>Betweenness:</b> " + parseFloat(node.attributes["btwn"]).toFixed(4))
-  //stats.push("Weighted Betweenness: " + node.attributes["wbtwn"])
+  stats.push("<b>Number of collaborative publications:</b> " + node.attributes["wdegree"])
+  stats.push("<b>Closeness Centrality:</b> " + parseFloat(node.attributes["close"]).toFixed(4))
+  stats.push("<b>Betweenness Centrality:</b> " + parseFloat(node.attributes["btwn"]).toFixed(4))
 
   return stats 
 }
@@ -65,9 +83,9 @@ function authorCell2(cellname, params, onRendered) {
   for (let i = 0; i < names.length; i += 1) {
     let author = document.createElement("div")
     author.className = "author"
-    author.innerHTML = `${names[i]}; `
+    author.innerHTML = `${names[i]}`
     author.key = i
-    author.setAttribute("node", parseInt(window.nameToId[names[i]]))//window.pa_list["ai"][cellname["_cell"].row.position - 1][i])
+    author.setAttribute("node", parseInt(window.nameToId[names[i]]))
     cell.appendChild(author)
   }
 
@@ -93,14 +111,17 @@ function authorCell2(cellname, params, onRendered) {
 
       authors[j].addEventListener("click", () => {
         console.log(authors[j])
-        let nattr = window.renderer.nodeDataCache[node]
-        //zoomToPos(nattr.x, nattr.y)
         set_selected_div(node)
       })
     }
   })
 
   return cell
+}
+
+function zoomToNode(nodename) {
+  let nattr = window.renderer.nodeDataCache[nodename]
+  zoomToPos(nattr.x, nattr.y)
 }
 
 export function zoomToPos(x, y) {
@@ -119,7 +140,7 @@ const EDGECOLOR_DEFAULT = "rgba(0, 0, 0, 0.3)"
 const EDGECOLOR_SELECTED = "#FF8585"
 
 const NODECOLOR_HOVER = "#FF00FF"
-const NODECOLOR_HOVER2 = "#00FF00"
+const NODECOLOR_HOVER2 = "#55FF00"
 const EDGECOLOR_HOVER = "#FF00FF"
 
 export function renderNetworks() {
@@ -242,11 +263,7 @@ export function switch_tabs(name, first=false) {
   }
 }
 
-function paperInComponent(data, params) {
-  return params.includes(String(data.ai[0]))
-}
-
-function toggle_componentpapers(show) {
+export function toggle_componentpapers(show) {
   let ctoggle = $("#componentpapers").get(0)
   if (show) {
     let check = document.createElement("input")
@@ -255,15 +272,22 @@ function toggle_componentpapers(show) {
     ctoggle.appendChild(check)
     ctoggle.innerHTML += "Only Component"
 
-    let test = document.getElementById("cpcheckbox")
-    test.checked = window.componentpapers
+    let togglebox = document.getElementById("cpcheckbox")
+    togglebox.checked = window.componentpapers
 
-    test.addEventListener("change", e => {
+    togglebox.addEventListener("change", e => {
       window.componentpapers = e.target.checked
 
       if (window.componentpapers) {
         let nodes = window.components[window.component].nodes()
+        let filters = window.table.getFilters();
+        let minval = parseInt(document.getElementById("minyear").value)
+        let maxval = parseInt(document.getElementById("maxyear").value)
+        console.log(window.table.getFilters())
         window.table.setFilter(paperInComponent, nodes)
+        window.table.addFilter("py", ">=", minval);
+        window.table.addFilter("py", "<=", maxval);
+        console.log(window.table.getFilters())
       }
       else {
         let filters = window.table.getFilters()
@@ -278,6 +302,10 @@ function toggle_componentpapers(show) {
   else {
     ctoggle.innerHTML = ""
   }
+}
+
+export function paperInComponent(data, params) {
+  return params.includes(String(data.ai[0]))
 }
 
 export function set_selected_div(node=null, refresh=false) {
@@ -295,27 +323,48 @@ export function set_selected_div(node=null, refresh=false) {
   let selecteddiv = document.getElementById("selected")
 
   if (node == null) {
-    if (window.selected == null && selecteddiv.innerHTML.length > 0) {
+    if (window.selected == null && selecteddiv.innerHTML.length > 0 && !refresh) {
       return 
     }
 
     window.selected = null
 
-    let heading = document.createElement("h3")
-    heading.innerHTML = "Network Information"
+    let headingglobal = document.createElement("h4")
+    headingglobal.innerHTML = "Entire Network Information"
+    let componentinfo = componentMetrics(window.components[window.component])
+    let globalinfo = globalMetrics()
 
-    let globalinfo = globalMetrics(window.components[window.component])
-
-    let bullets = document.createElement("ul")
+    let bulletsglobal = document.createElement("ul")
     for (let i = 0; i < globalinfo.length; i += 1) {
       let b = document.createElement("li")
       b.innerHTML = globalinfo[i]
+      bulletsglobal.appendChild(b)
+    }
+
+    let heading = document.createElement("h4")
+    heading.innerHTML = "Connected Component " + (parseInt(window.component)+1) + " Information"
+
+    let bullets = document.createElement("ul")
+    for (let i = 0; i < componentinfo.length; i += 1) {
+      let b = document.createElement("li")
+      b.innerHTML = componentinfo[i]
       bullets.appendChild(b)
     }
 
+    let columndiv = document.createElement("div")
+    columndiv.id = "flexrow"
+    let leftdiv = document.createElement("div")
+    leftdiv.appendChild(heading)
+    leftdiv.appendChild(bullets)
+
+    let rightdiv = document.createElement("div")
+    rightdiv.appendChild(headingglobal)
+    rightdiv.appendChild(bulletsglobal)
+
     selecteddiv.innerHTML = ""
-    selecteddiv.appendChild(heading)
-    selecteddiv.appendChild(bullets)
+    columndiv.appendChild(leftdiv)
+    columndiv.appendChild(rightdiv)
+    selecteddiv.appendChild(columndiv)
 
     console.log(document.getElementsByClassName("activebutton"))
     let activename = document.getElementsByClassName("activebutton")[0].id
@@ -363,12 +412,10 @@ export function set_selected_div(node=null, refresh=false) {
       if (source == window.selected) {
         targetvals.color = NODECOLOR_NEIGHBOR
         targetvals.borderColor = NODEBORDER_NEIGHBOR
-        //targetvals.forceLabel = true
       }
       else {
         sourcevals.color = NODECOLOR_NEIGHBOR
         sourcevals.borderColor = NODEBORDER_NEIGHBOR
-        //sourcevals.forceLabel = true
       }
     })
     node.attributes.color = NODECOLOR_SELECTED
@@ -382,7 +429,7 @@ export function set_selected_div(node=null, refresh=false) {
     heading.id = "selectedName"
 
     let name = node.attributes["fullname"].split("; ")[0]
-    heading.innerHTML = "<b>Selected Node Info:</b> " + name.split("; ")[0]
+    heading.innerHTML = "<b>Selected Node:</b> " + name.split("; ")[0]
     let localinfo = localMetrics(network, node)
 
     let bullets = document.createElement("ul")
@@ -392,8 +439,43 @@ export function set_selected_div(node=null, refresh=false) {
       bullets.appendChild(b)
     }
 
+    let canceldiv = document.createElement("div")
+
+    let webbutton = document.createElement("button")
+    webbutton.id = "webbutton"
+    webbutton.innerHTML = "🌐"
+
+    let zoombutton = document.createElement("button")
+    zoombutton.id = "zoombutton"
+    zoombutton.innerHTML = "🔍"
+
+    let cancelbutton = document.createElement("button")
+    cancelbutton.id = "cancelbutton"
+    cancelbutton.innerHTML = "X"
+
+    canceldiv.id = "canceldiv"
+    canceldiv.appendChild(heading)
+    canceldiv.appendChild(webbutton)
+    canceldiv.appendChild(zoombutton)
+    canceldiv.appendChild(cancelbutton)
     selecteddiv.innerHTML = ""
-    selecteddiv.appendChild(heading)
+
+    webbutton.addEventListener("click", () => {
+      window.open("https://www.scopus.com/authid/detail.uri?authorId=" + nodeinfo[parseInt(window.selected)][4], '_blank');
+    })
+
+    cancelbutton.addEventListener("click", () => {
+      cancelselect(window.selected)
+      window.selected = null
+      set_selected_div(null, true)
+    })
+
+    zoombutton.addEventListener("click", () => {
+      zoomToNode(window.selected)
+    })
+
+
+    selecteddiv.appendChild(canceldiv)
     selecteddiv.appendChild(bullets)
 
     let buttons = document.getElementsByClassName("tab2")
@@ -406,6 +488,31 @@ export function set_selected_div(node=null, refresh=false) {
 
     setup_selected_tabs(node)
   }
+}
+
+export function cancelselect(node) {
+  if (node == null) {
+    return
+  }
+
+  let network = window.components[window.component]
+  let selecteddiv = document.getElementById("selected")
+  selecteddiv.innerHTML = ""
+
+  network.forEachEdge(node, (edge, edgevals, source, target, sourcevals, targetvals) => {
+    edgevals.color = EDGECOLOR_DEFAULT
+    edgevals.size = 1
+    sourcevals.color = NODECOLOR_DEFAULT
+    sourcevals.borderColor = NODEBORDER_DEFAULT
+    targetvals.color = NODECOLOR_DEFAULT
+    targetvals.borderColor = NODEBORDER_DEFAULT
+    sourcevals.forceLabel = false
+    targetvals.forceLabel = false
+  })
+
+  network._nodes.get(node).attributes.color = NODECOLOR_DEFAULT
+  network._nodes.get(node).attributes.labelColor = "#000000"
+  window.renderer.refresh()
 }
 
 function authorCell3(cellname, params, onRendered) {
@@ -441,58 +548,6 @@ function authorCell3(cellname, params, onRendered) {
         }
       })
       authors[j].addEventListener("click", () => {
-        let nattr = window.renderer.nodeDataCache[node]
-        //zoomToPos(nattr.x, nattr.y)
-        set_selected_div(node.toString())
-      })
-    }
-  })
-
-  return cell
-}
-
-export function authorCell(cellname, params, onRendered) {
-  //console.log(cellname.getValue(), cellname["_cell"].row.position)
-  let names = cellname.getValue().split("; ").slice(0, 10)
-  let cell = document.createElement("div")
-  cell.className = "author-cell"
-
-  for (let i = 0; i < names.length; i += 1) {
-    let author = document.createElement("div")
-    author.className = "author"
-    author.innerHTML = `${names[i]}; `
-    author.setAttribute("node", window.pa_list["ai"][cellname["_cell"].row.position - 1][i])
-    cell.appendChild(author)
-  }
-
-  let nodes = window.components[window.component].nodes()
-  let ais = cellname.getRow().getData().ai
-  if (!nodes.includes(String(ais[0]))) {
-    cell.classList.add("nohover")
-    return cell
-  }
-    
-  onRendered(() => {
-    let authors = cellname.getElement().children[0].children 
-
-    for (let j = 0; j < authors.length; j += 1) {
-      let network = window.components[window.component]
-      let node = cellname.getData().ai[j]
-      let nodeobj = network._nodes.get(node.toString())
-
-      authors[j].addEventListener("mouseenter", () => {
-        if (nodeobj !== undefined) {
-          hover_node(nodeobj, true) 
-        }
-      })
-      authors[j].addEventListener("mouseleave", () => {
-        if (nodeobj !== undefined) {
-          hover_node(nodeobj, false) 
-        }
-      })
-      authors[j].addEventListener("click", () => {
-        let nattr = window.renderer.nodeDataCache[node]
-        //zoomToPos(nattr.x, nattr.y)
         set_selected_div(node.toString())
       })
     }
@@ -517,11 +572,21 @@ export function setup_selected_tabs(node) {
     layout: "fitData",
     columns: [
       {title:"", field:"", formatter:"rownum", width: "5%", headerSort: false},
-      { title: "Authors", field: "af", width: "32%", formatter: authorCell3,  resizable: false, variableHeight:true},
-      { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea"},
+      { title: "Authors", field: "af", width: "32%", formatter: authorCell3,  resizable: false, variableHeight:true, headerFilter:"input"},
+      { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea", cssClass: "paperTitle", headerFilter:"input"},
       { title: "Year", field: "py",  width: "10%", resizable: false},
     ]
   })
+
+  window.papers.on("cellClick", (e, cell) => {
+    let field = cell.getField()
+    if (field == "ti") {
+      window.open("https://doi.org/" + cell.getRow().getData().doi, "_blank");
+    }
+    else {
+      console.log(cell)
+    }
+  });
 
   let ndiv = document.getElementById("neighbor")
 
@@ -639,75 +704,82 @@ export function set_components_from_ai(ai) {
 
   window.nameToId = {}
 
-  let graph = Graph.from(gdata, {type: "undirected"})
+  window.graph = Graph.from(gdata, {type: "undirected"})
 
-  graph.forEachNode( node => {
-    graph.setNodeAttribute(node, 'type', "border")
-    graph.setNodeAttribute(node, 'label', oneName(nodeinfo[node][0]).trim())
-    graph.setNodeAttribute(node, 'fullname', nodeinfo[node][0])
-    graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
-    graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
-    graph.setNodeAttribute(node, 'size', 3)
-    graph.setNodeAttribute(node, 'color', NODECOLOR_DEFAULT)
-    graph.setNodeAttribute(node, 'borderColor', NODEBORDER_DEFAULT)
+  window.graph.forEachNode( node => {
+    if (!nodeinfo[node]) {
+      console.log(node)
+      return
+    }
+
+    window.graph.setNodeAttribute(node, 'type', "border")
+    window.graph.setNodeAttribute(node, 'label', oneName(nodeinfo[node][0]).trim())
+    window.graph.setNodeAttribute(node, 'fullname', nodeinfo[node][0])
+    window.graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
+    window.graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
+    window.graph.setNodeAttribute(node, 'size', 3)
+    window.graph.setNodeAttribute(node, 'color', NODECOLOR_DEFAULT)
+    window.graph.setNodeAttribute(node, 'borderColor', NODEBORDER_DEFAULT)
     window.nameToId[nodeinfo[node][0]] = node
     window.nameToId[ oneName(nodeinfo[node][0]).trim()] = node
   } );
 
-  let components = connectedComponents(graph);
+  let components = connectedComponents(window.graph);
   components.sort((a, b) => b.length - a.length);
   for (let i = 0; i < components.length; i++) {
-    let gc = subgraph(graph, components[i])
+    let gc = subgraph(window.graph, components[i])
     networks.push(gc)
   }
 
-  console.log(networks[0])
-
   if (components.length == 0) {
-    networks = [ graph ];
+    networks = [ window.graph ];
   }
 
   let numsize = {}
   let str = ""
+  document.getElementById("nodesearch").innerHTML = ""
   for (let i = 0; i < networks.length; i++) {
     let size = networks[i].nodes().length
 
     if (numsize[size]) {
       numsize[size] += 1;
-      str += `<option value=${i}>${networks[i].nodes().length}${String.fromCharCode(64 + numsize[size])} Nodes</option>`
+      str += `<option value=${i}> ${networks[i].nodes().length} Nodes ${String.fromCharCode(64 + numsize[size])} </option>`
     }
     else { 
       numsize[size] = 1;
-      str += `<option value=${i}>${networks[i].nodes().length} Nodes</option>`
+      str += `<option value=${i}> ${networks[i].nodes().length} Nodes </option>`
+
     }
+
+    setupNodeSearch(networks[i])
   }
 
-  //$("#component-select").get(0).innerHTML = str
+  $("#component-select").get(0).innerHTML = str
 
   window.components = networks
 
-  setupNodeSearch(networks[0])
+  //setupNodeSearch(networks[0])
   setupCentralityTables(networks[0])
 }
 
 function setupNodeSearch(component) {
   let searchoptions = document.getElementById("nodesearch")
-
+ 
   let nodes = component.nodes()
   for (let i = 0; i < nodes.length; i += 1) {
     let op = document.createElement("option")
     op.value = nodeinfo[nodes[i]][0]
-    searchoptions.appendChild(op)  
+    op.setAttribute("node", nodes[i])
+    searchoptions.appendChild(op)
   }
 }
 
-function setupCentralityTables(component) {
+export function setupCentralityTables(component) {
   // degree centrality
   let ranking = []
   let nodes = component.nodes()
 
   betweennessCentrality.assign(component, {nodeCentralityAttribute: "btwn", normalized: true, getEdgeWeight: null});
-  //betweennessCentrality.assign(component, {nodeCentralityAttribute: "wbtwn", normalized: true, getEdgeWeight: "weight"});
   closenessCentrality.assign(component, {nodeCentralityAttribute: "close"});
 
   for (let i = 0; i < nodes.length; i += 1) {
@@ -720,25 +792,24 @@ function setupCentralityTables(component) {
     obj.degree = nattr.undirectedDegree
     obj.wdegree = nattr.attributes["wdegree"]
     obj.btwn = Math.round(nattr.attributes["btwn"] * (nodes.length - 1) * 10) / 10
-    obj.wbtwn = Math.round(nattr.attributes["wbtwn"] * (nodes.length - 1) * 10) / 10
     obj.close = Math.round(nattr.attributes["close"] * (nodes.length - 1) * 10) / 10
     ranking.push(obj)
   }
 
   var columns = [
-    {title:"", field:"", formatter:"rownum", width: "2%", headerSort: false},
-    { title: "Name", field: "name", formatter: authorCell2, resizable: false },
-    { title: "Degree", field: "degree", resizable: false, headerSortStartingDir:"desc" },
-    { title: "W. Degree", field: "wdegree", resizable: false, headerSortStartingDir:"desc"},
+    { title:"", field:"", formatter:"rownum", width: "2%", headerSort: false},
+    { title: "Name", field: "name", formatter: authorCell2, resizable: true, headerFilter:"input" },
+    { title: "\# Co-Authors", field: "degree", resizable: false, headerSortStartingDir:"desc" },
+    { title: "\# Co-Publications", field: "wdegree", resizable: false, headerSortStartingDir:"desc"},
     { title: "Close", field: "close", resizable: false, headerSortStartingDir:"desc"},
-    { title: "Between", field: "btwn", resizable: false, headerSortStartingDir:"desc"}, 
-    //{ title: "W. Between", field: "wbtwn", resizable: false, headerSortStartingDir:"desc"},
+    { title: "Between", field: "btwn", resizable: false, headerSortStartingDir:"desc"},
   ];
 
   window.nodeTable = new Tabulator("#index", {
     data: ranking,
     columns: columns,
-    layout: "fitDataStretch",
+    height: "100%",
+    layout: "fitData",
     initialSort:[
       {column:"name", dir:"asc"}
     ]

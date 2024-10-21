@@ -1,5 +1,4 @@
 #app {
-  /*border: 1px dashed black;*/
   max-width: 99vw;
   display: flex;
 }
@@ -32,8 +31,9 @@ label {
 #nodesearchdiv {
   display: flex;
   align-items: center;
-  margin-left: 0.5em;
   height: 2em;
+  flex: 1;
+  padding-left: 0.5em;
 }
 
 #nodesearchfield {
@@ -42,27 +42,93 @@ label {
   margin-left: 0.5em;
 }
 
+#title {
+  flex: 2;
+  text-align: left;
+  padding-left: 0.5em;
+}
+
 #site-info {
-  height: 100%;
-  font-size: 1.5em;
+  font-size: 1.75em;
+  height: 4vh;
+  margin-right: 0.25em;
+  color: black;
+}
+
+#site-info:hover {
+  color:goldenrod;
+}
+
+#canceldiv {
+  margin-top: 1em;
   display: flex;
   align-items: center;
-  margin-left: 0.25em
+}
+
+#cancelbutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-color: orangered;
+  border-radius: 0.5em;
+}
+
+#cancelbutton:hover {
+  background-color: orangered;
+}
+
+#webbutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-color: limegreen;
+  border-width: 2px;
+  border-radius: 0.5em;
+}
+
+#webbutton:hover {
+  background-color: limegreen
+}
+
+#zoombutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-radius: 0.5em;
+  border-color: magenta;
+}
+
+#zoombutton:hover {
+  background-color: magenta;
+}
+
+
+#canceldiv>h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.2em;
 }
 
 #components {
-  /*border: 1px solid magenta;*/
-  flex: 3;
   height: 100%;
+  flex: 2;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 #component-select {
-  width: 50%;
-  margin-left: 1em;
+  margin-left: 0.75em;
+  margin-right: 0.75em;
   font-size: 1em;
+  padding-right: 0.5em;
+}
+
+#leftcomponent, #rightcomponent {
+  margin-right: 0.5em;
 }
 
 .inactivetab {
@@ -81,6 +147,14 @@ label {
   /*border: 1px solid yellow;*/
   height: 28vh;
   margin-left: 1vh;
+}
+
+#flexrow {
+  display: flex;
+}
+
+#flexrow>div {
+  margin-right: 4vh;
 }
 
 #network {
@@ -107,7 +181,8 @@ label {
   background-color:aliceblue;
   height: 95vh;
   flex: 1;
-  max-width: 48vw;
+  max-width: 49vw;
+  padding-left: 0.25em;
 }
 
 .tab, .tab2 {
@@ -199,7 +274,7 @@ label {
 
 
 #maxdiv {
-  margin: 0.5em;
+  margin-right: 0.5em;
   display: flex;
   align-items: center;
   flex: 1;
@@ -235,11 +310,20 @@ a:hover {
 }
 
 #neighbor li:hover {
-  color: fuchsia;
+  color: #55AA00;
 }
 
 #selectedName {
   font-weight: normal;
+}
+
+.tabulator-col-content {
+  display: flex;
+  color: black;
+}
+
+.tabulator-header-filter>input {
+  max-width: 90%;
 }
 
 li {
@@ -250,14 +334,26 @@ li {
 #year-filter {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  color: blue;
+  flex: 1;
 }
 
 #year-inputs {
   display: flex;
   justify-content: center;
-  margin-left: 0.5em;
+}
+
+.paperTitle {
+  color: black;
+}
+
+.paperTitle:hover {
+  color: blue;
+}
+
+#topright {
+  display: flex;
+  height: 5vh;
+  align-items: center;
 }
 
 .author {
@@ -269,7 +365,7 @@ li {
 }
 
 .nohover > .author:hover {
-  color: black;
+  color: darkcyan;
 }
 
 .author-cell {

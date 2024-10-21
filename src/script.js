@@ -1,6 +1,6 @@
 import peri from "./scopus.json"
 
-import { authorCell, switch_tabs, set_selected_div, transformData, zoomToPos, renderNetworks, set_components_from_ai } from "./utils.js"
+import { hover_node, cancelselect, paperInComponent, toggle_componentpapers, setupCentralityTables, switch_tabs, set_selected_div as set_nodeselect_div, transformData, zoomToPos, renderNetworks, set_components_from_ai } from "./utils.js"
 
 import './style.css';
 
@@ -8,41 +8,67 @@ function searchScientist(input) {
   let name = input.value
 
   let nid = window.nameToId[name]
-  if (nid) {
-    let nattr = window.renderer.nodeDataCache[parseInt(nid)]
+  if (window.components[window.component].nodes().includes(nid)) {
     input.value = ""
-    //zoomToPos(nattr.x, nattr.y)
-    set_selected_div(nid)
+    set_nodeselect_div(nid, true)
   }
   else {
-    console.log(name + " not found")
+    let found = selectOutsideComponentID(nid)
+    if (found) {
+      input.value = ""
+    }
   }
 }
 
-function updateYears(table) {
+function updateYears() {
   let minval = parseInt(document.getElementById("minyear").value)
   let maxval = parseInt(document.getElementById("maxyear").value)
 
-  let filters = table.getFilters();
+  let filters = window.table.getFilters();
   for (let i = 0; i < filters.length; i += 1) {
     if (filters[i].field == "py") {
       table.removeFilter("py", filters[i].type, filters[i].value)
     }
   }
-  table.addFilter("py", ">=", minval);
-  table.addFilter("py", "<=", maxval);
+  window.table.addFilter("py", ">=", minval);
+  window.table.addFilter("py", "<=", maxval);
 
-  updateNetworks(table);
+  // update table
+  let pa_list = window.pa_list;
+  let newlist = {}
+  for (const [key, value] of Object.entries(pa_list.py)) {
+    if (value >= minval && value <= maxval) {
+      newlist[key] = pa_list.ai[key]
+    }
+  }
 
-  // update network/selected information
   let selected = window.selected
-  let selecteddiv = document.getElementById("selected")
-  selecteddiv.innerHTML = ""
+  window.component = 0
 
-  set_selected_div(selected, true)
+  set_components_from_ai(newlist);
+  renderNetworks()
+
+  if (window.selected) {
+    window.selected = null
+    if (window.components[window.component].nodes().includes(selected)) {
+      set_nodeselect_div(selected)
+    }
+    else {
+      let searchnode = selectOutsideComponentID(selected)
+      if (!searchnode) {
+        set_nodeselect_div(null, true)
+      }
+    }
+  }
+  else {
+    let selecteddiv = document.getElementById("selected")
+    selecteddiv.innerHTML = ""
+    set_nodeselect_div(window.selected, true)
+  }
 }
 
-function updateNetworks(table) {
+function updateNetworksYears(table) {
+  return
   let filters = table.getFilters();
   
   let geq = 2000;
@@ -64,16 +90,154 @@ function updateNetworks(table) {
     }
   }
 
+  window.component = 0
   set_components_from_ai(newlist);
-  window.component = 0;
+  
   renderNetworks()
 }
 
-function updateComponent() {
+function authorCell(cellname, params, onRendered) {
+  //console.log(cellname.getValue(), cellname["_cell"].row.position)
+  let names = cellname.getValue().split("; ").slice(0, 10)
+  let cell = document.createElement("div")
+  cell.className = "author-cell"
+
+  for (let i = 0; i < names.length; i += 1) {
+    let author = document.createElement("div")
+    author.className = "author"
+    author.innerHTML = `${names[i]}; `
+    author.setAttribute("node", parseInt(window.nameToId[names[i]]))
+    cell.appendChild(author)
+  }
+
+  let nodes = window.components[window.component].nodes()
+  let ais = cellname.getRow().getData().ai
+
+  let incomponent = true
+  if (!nodes.includes(String(ais[0]))) {
+    cell.classList.add("nohover")
+    incomponent = false
+  }
+    
+  onRendered(() => {
+    let authors = cellname.getElement().children[0].children 
+
+    for (let j = 0; j < authors.length; j += 1) {
+      let network = window.components[window.component]
+      let node = cellname.getData().ai[j]
+      let nodeobj = network._nodes.get(node.toString())
+
+      if (incomponent) {
+        authors[j].addEventListener("mouseenter", () => {
+          if (nodeobj !== undefined) {
+            hover_node(nodeobj, true) 
+          }
+        })
+        authors[j].addEventListener("mouseleave", () => {
+          if (nodeobj !== undefined) {
+            hover_node(nodeobj, false) 
+          }
+        })
+
+        authors[j].addEventListener("click", () => {
+          set_nodeselect_div(node.toString())
+        })
+      }
+      else {
+        authors[j].addEventListener("click", () => {
+          selectOutsideComponentID(node.toString())
+        })
+      }
+    }
+  })
+
+  return cell
+}
+
+function selectOutsideComponentID(nid) {
+  if (!nid) {
+    alert("Could not find node")
+    console.log("From alert:", nid)
+    return false
+  }
+
+  for (let i = 0; i < window.components.length; i += 1) {
+    let cnodes = window.components[i].nodes()
+
+    if (cnodes.includes(nid)) {
+      setComponent(i)
+      console.log(nid, cnodes)
+      set_nodeselect_div(nid)
+      return true
+    }
+  }
+
+  return false
+}
+
+function selectOutsideComponentName(name) {
+  let nid = window.nameToId[name]
+  if (!nid) {
+    alert("Could not find node")
+    return false
+  }
+
+  for (let i = 0; i < window.components.length; i += 1) {
+    let cnodes = window.components[i].nodes()
+    if (nid in cnodes) {
+      setComponent(i)
+      set_nodeselect_div(nid)
+      return true
+    }
+  }
+}
+
+function setComponent(num) {
+  cancelselect(window.selected)
   let select = $("#component-select").get(0);
-  window.component = select.options[select.selectedIndex].value;
+  select.value = num;
+
+  let selecteddiv = document.getElementById("selected")
+  selecteddiv.innerHTML = ""
+
+  window.component = num;
+  set_nodeselect_div(window.selected, true)
+  setupCentralityTables(window.components[num])
+
+  if (window.componentpapers) {
+    toggle_componentpapers(false)
+    toggle_componentpapers(true)
+    window.table.setFilter(paperInComponent, window.components[num].nodes())
+  }
+
+  redraw_tables()
 
   renderNetworks()
+}
+
+function redraw_tables() {
+  window.table.redraw(true)
+
+  if (window.papers) {
+    window.papers.redraw(true)
+  }
+}
+
+function updateComponent(number=null) {
+  let selectdiv = $("#component-select").get(0)
+
+  if (number == null) {
+    number = selectdiv.selectedIndex;
+  }
+  else {
+    number = Math.max(number, 0)
+    number = Math.min(number, window.components.length - 1)
+  }
+  let value = selectdiv.options[number].value
+
+  if (value != window.component) {
+    setComponent(value)
+  }
 }
 
 
@@ -85,26 +249,41 @@ $(document).ready(function() {
 
   window.component = 0
   window.selected = null
-  set_selected_div()
-
-  window.table = new Tabulator("#info", {
-    data: transposed,
-    layout: "fitData",
-    columns: [
-      {title:"", field:"", formatter:"rownum", width: "5%", headerSort: false},
-      { title: "Authors", field: "af", width: "32%", formatter: authorCell,  resizable: false, variableHeight:true},
-      { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea"},
-      { title: "Year", field: "py",  width: "10%", resizable: false},
-    ]
-  })
+  set_nodeselect_div()
 
   window.tab = "info"
   window.componentpapers = false
 
+  window.table = new Tabulator("#info", {
+    data: transposed,
+    layout: "fitData",
+    height: "100%",
+    columns: [
+      {title:"", field:"", formatter:"rownum", width: "5%", headerSort: false},
+      { title: "Authors", field: "af", width: "32%", formatter: authorCell,  resizable: false, variableHeight:true, cssClass: "authorName", headerFilter:"input"},
+      { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea", cssClass: "paperTitle", headerFilter:"input"},
+      { title: "Year", field: "py",  width: "10%", resizable: false},
+    ],
+  })
+
+  window.table.on("cellClick", (e, cell) => {
+    let field = cell.getField()
+    if (field == "ti") {
+      window.open("https://doi.org/" + cell.getRow().getData().doi, "_blank");
+    }
+    else {
+      console.log(cell)
+    }
+  });
+
   window.table.on("tableBuilt", () => {
     $("#minyear").get(0).addEventListener("change", () => updateYears(table));
     $("#maxyear").get(0).addEventListener("change", () => updateYears(table));
-    //$("#component-select").get(0).addEventListener("change", () => updateComponent());
+
+    $("#leftcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) - 1) })
+    $("#rightcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) + 1) })
+
+    $("#component-select").get(0).addEventListener("change", () => updateComponent());
     $("#nodesearchfield").get(0).addEventListener("keyup", (e) => {
       if (e.key == "Enter" || e.keyCode == 13) {
         searchScientist(e.target);
@@ -116,15 +295,19 @@ $(document).ready(function() {
 
     $("#infotab").get(0).addEventListener("click", () => {
       switch_tabs("info")
+      redraw_tables()
     })
     $("#indextab").get(0).addEventListener("click", () => {
       switch_tabs("index")
+      redraw_tables()
     })
     $("#neighbortab").get(0).addEventListener("click", () => {
       switch_tabs("neighbor")
+      redraw_tables()
     })
     $("#papertab").get(0).addEventListener("click", () => {
       switch_tabs("paper")
+      redraw_tables()
     })
   });
 })
