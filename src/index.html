@@ -14,29 +14,29 @@
   <div id="network-half">
     <div id="network-selector">
       <h1 id="title">Co-Authorship Network Analysis Tool</h1>
-      <div id="components">Component:<select id="component-select"></select><button id="leftcomponent">🡐</button><button id="rightcomponent">🡒</button></div>
+      <div id="components">Component:<select id="component-select"></select><button id="leftcomponent">←</button><button id="rightcomponent">→</button></div>
     </div>
     <div id="network"></div>
   </div>
   <div id="info-half">
     <div id="topright">
       <div id="nodesearchdiv">
-        <p>Scientist selector</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist>
+        <p>Scientist Selector</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist>
       </div>
       <div id="year-filter">
         Years
         <div id="year-inputs">
           <div id="mindiv">
-            <input id="minyear" type="number" min=2022 max=2024 value=2022 />
+            <input id="minyear" type="number" min=2000 max=2023 value=2000 />
             <label for="minyear">to</label>
           </div>
 
           <div id="maxdiv">
-            <input id="maxyear" type="number" min=2022 max=2024 value=2024 />
+            <input id="maxyear" type="number" min=2000 max=2023 value=2023 />
           </div>
         </div>
       </div>
-      <a id="site-info" href="info.html" target="_blank">ⓘ</a>
+      <a id="site-info" href="papervisinfo.pdf" target="_blank">ⓘ</a>
     </div>
     <div id="selected"></div>
     <div id="info-content">
