@@ -4,15 +4,7 @@
 This tool allows the user to visualize and analyze the evolution of the peridynamics co-authorship network. Each node represents a scientist, and links connect scientists who have co-authored publications.
 
 ## Citing PDnetwork
-If you use PDnetwork in your work, please cite:
-```
-@article{Todo,
-  author = {Todo},
-  title = {Todo},
-  journal = {Todo},
-  url = {Todo}
-}
-```
+If you use PDnetwork in your work, please cite: [Zenodo release](Todo).
 
 ## Acknowledgments
 **Data from Scopus, Copyright Elsevier (2024)**
