@@ -1,5 +1,5 @@
 # PDnetwork
-url: https://ornl.github.io/PDnetwork/
+URL: https://ornl.github.io/PDnetwork/
 
 ## A tool for analyzing collaborations in the field of peridynamics
 This tool allows users to visualize and analyze the evolution of the peridynamics co-authorship network. Each node represents a scientist, and links connect scientists who have co-authored publications.
