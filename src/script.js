@@ -21,8 +21,8 @@ function searchScientist(input) {
 }
 
 function updateYears() {
-  let minval = parseInt(document.getElementById("minyear").value)
-  let maxval = parseInt(document.getElementById("maxyear").value)
+  window.minyearval = parseInt(document.getElementById("minyear").value)
+  window.maxyearval = parseInt(document.getElementById("maxyear").value)
 
   let filters = window.table.getFilters();
   for (let i = 0; i < filters.length; i += 1) {
@@ -30,20 +30,20 @@ function updateYears() {
       table.removeFilter("py", filters[i].type, filters[i].value)
     }
   }
-  window.table.addFilter("py", ">=", minval);
-  window.table.addFilter("py", "<=", maxval);
-
+  
   // update table
   let pa_list = window.pa_list;
   let newlist = {}
   for (const [key, value] of Object.entries(pa_list.py)) {
-    if (value >= minval && value <= maxval) {
+    if (value >= window.minyearval && value <= window.maxyearval) {
       newlist[key] = pa_list.ai[key]
     }
   }
 
+  window.table.addFilter("py", ">=", window.minyearval);
+  window.table.addFilter("py", "<=", window.maxyearval);
+
   let selected = window.selected
-  window.component = 0
 
   set_components_from_ai(newlist);
   renderNetworks()
@@ -67,34 +67,6 @@ function updateYears() {
   }
 }
 
-function updateNetworksYears(table) {
-  return
-  let filters = table.getFilters();
-  
-  let geq = 2000;
-  let leq = 2023;
-  for (let i = 0; i < filters.length; i += 1) {
-    if (filters[i].type == ">=") {
-      geq = filters[i].value;
-    }
-    else if (filters[i].type == "<=") {
-      leq = filters[i].value;
-    }
-  }
-
-  let pa_list = window.pa_list;
-  let newlist = {}
-  for (const [key, value] of Object.entries(pa_list.py)) {
-    if (value >= geq && value <= leq) {
-      newlist[key] = pa_list.ai[key]
-    }
-  }
-
-  window.component = 0
-  set_components_from_ai(newlist);
-  
-  renderNetworks()
-}
 
 function authorCell(cellname, params, onRendered) {
   //console.log(cellname.getValue(), cellname["_cell"].row.position)
@@ -208,6 +180,8 @@ function setComponent(num) {
     toggle_componentpapers(false)
     toggle_componentpapers(true)
     window.table.setFilter(paperInComponent, window.components[num].nodes())
+    window.table.addFilter("py", ">=", window.minyearval);
+    window.table.addFilter("py", "<=", window.maxyearval);
   }
 
   redraw_tables()
@@ -254,6 +228,9 @@ $(document).ready(function() {
   window.tab = "info"
   window.componentpapers = false
 
+  window.minyearval = 2000
+  window.maxyearval = 2023
+
   window.table = new Tabulator("#info", {
     data: transposed,
     layout: "fitData",
@@ -264,6 +241,10 @@ $(document).ready(function() {
       { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea", cssClass: "paperTitle", headerFilter:"input"},
       { title: "Year", field: "py",  width: "10%", resizable: false},
     ],
+    initialSort: [
+      {column:"ti", dir:"asc"},
+      {column:"py", dir:"desc"}
+    ]
   })
 
   window.table.on("cellClick", (e, cell) => {
@@ -277,8 +258,8 @@ $(document).ready(function() {
   });
 
   window.table.on("tableBuilt", () => {
-    $("#minyear").get(0).addEventListener("change", () => updateYears(table));
-    $("#maxyear").get(0).addEventListener("change", () => updateYears(table));
+    $("#minyear").get(0).addEventListener("change", () => updateYears());
+    $("#maxyear").get(0).addEventListener("change", () => updateYears());
 
     $("#leftcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) - 1) })
     $("#rightcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) + 1) })

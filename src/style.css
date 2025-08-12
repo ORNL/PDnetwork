@@ -11,6 +11,25 @@
   background-color:aliceblue;
 }
 
+#github {
+  width: 1.5em;
+}
+
+#githubholder {
+  display: flex;
+  padding: 0.5em;
+  margin-left: 0.5em;
+}
+
+#lefttitle {
+  display: flex;
+}
+
+#github:hover {
+  width: 1.5em;
+  opacity: 0.4;
+}
+
 #network-selector {
   /*border: 1px solid green;*/
   height: 5vh;

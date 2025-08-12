@@ -265,6 +265,8 @@ export function switch_tabs(name, first=false) {
 
 export function toggle_componentpapers(show) {
   let ctoggle = $("#componentpapers").get(0)
+  ctoggle.innerHTML = ""
+
   if (show) {
     let check = document.createElement("input")
     check.id = "cpcheckbox"
@@ -281,12 +283,10 @@ export function toggle_componentpapers(show) {
       if (window.componentpapers) {
         let nodes = window.components[window.component].nodes()
         let filters = window.table.getFilters();
-        let minval = parseInt(document.getElementById("minyear").value)
-        let maxval = parseInt(document.getElementById("maxyear").value)
         console.log(window.table.getFilters())
         window.table.setFilter(paperInComponent, nodes)
-        window.table.addFilter("py", ">=", minval);
-        window.table.addFilter("py", "<=", maxval);
+        window.table.addFilter("py", ">=", window.maxyearval);
+        window.table.addFilter("py", "<=", window.maxyearval);
         console.log(window.table.getFilters())
       }
       else {
@@ -298,9 +298,6 @@ export function toggle_componentpapers(show) {
         }
       }
     })
-  }
-  else {
-    ctoggle.innerHTML = ""
   }
 }
 
@@ -342,7 +339,7 @@ export function set_selected_div(node=null, refresh=false) {
     }
 
     let heading = document.createElement("h4")
-    heading.innerHTML = "Connected Component " + (parseInt(window.component)+1) + " Information"
+    heading.innerHTML = "Selected Component Information"
 
     let bullets = document.createElement("ul")
     for (let i = 0; i < componentinfo.length; i += 1) {
@@ -366,7 +363,6 @@ export function set_selected_div(node=null, refresh=false) {
     columndiv.appendChild(rightdiv)
     selecteddiv.appendChild(columndiv)
 
-    console.log(document.getElementsByClassName("activebutton"))
     let activename = document.getElementsByClassName("activebutton")[0].id
     if (activename !== "indextab" && activename !== "infotab") {
       switch_tabs("index")
@@ -516,16 +512,17 @@ export function cancelselect(node) {
 }
 
 function authorCell3(cellname, params, onRendered) {
-  console.log(cellname.getValue(), cellname["_cell"].row.position)
+  console.log(cellname.getValue(), cellname["_cell"].row.position,)
   let names = cellname.getValue().split("; ").slice(0, 10)
   let cell = document.createElement("div")
   cell.className = "author-cell"
+  let colids = cellname.getRow().getData()["ai"]
 
   for (let i = 0; i < names.length; i += 1) {
     let author = document.createElement("div")
     author.className = "author"
     author.innerHTML = `${names[i]}; `
-    author.setAttribute("node", window.pa_list["ai"][cellname["_cell"].row.position - 1][i])
+    author.setAttribute("node", colids[i])
     cell.appendChild(author)
   }
 
@@ -533,9 +530,11 @@ function authorCell3(cellname, params, onRendered) {
     let authors = cellname.getElement().children[0].children 
 
     for (let j = 0; j < authors.length; j += 1) {
-      let network = window.components[window.component]
-      let node = window.selectedpapers[cellname["_cell"].row.position - 1]["ai"][j]
-      let nodeobj = network._nodes.get(node.toString())
+      //console.log("Working on", authors[j])
+      //let network = window.components[window.component]
+      //let node = window.selectedpapers[cellname["_cell"].row.position - 1]["ai"][j]
+      //console.log("node is", node, "from", window.selectedpapers[cellname["_cell"].row.position - 1]["ai"], "because authors is", authors)
+      let nodeobj = window.components[window.component]._nodes.get("" + colids[j])
 
       authors[j].addEventListener("mouseenter", () => {
         if (nodeobj !== undefined) {
@@ -548,7 +547,7 @@ function authorCell3(cellname, params, onRendered) {
         }
       })
       authors[j].addEventListener("click", () => {
-        set_selected_div(node.toString())
+        set_selected_div("" + colids[j])
       })
     }
   })
@@ -559,7 +558,6 @@ function authorCell3(cellname, params, onRendered) {
 export function setup_selected_tabs(node) {
   let buttons = document.getElementsByClassName("tab2")
 
-  // papers
   let allpapers = window.table.getData();
   let filteredData = allpapers.filter(function(row) {
     return row.ai.includes(parseInt(node.key))
@@ -567,6 +565,7 @@ export function setup_selected_tabs(node) {
 
   window.selectedpapers = filteredData
 
+  console.log("Creating paper!")
   window.papers = new Tabulator("#paper", {
     data: window.selectedpapers,
     layout: "fitData",
@@ -575,8 +574,17 @@ export function setup_selected_tabs(node) {
       { title: "Authors", field: "af", width: "32%", formatter: authorCell3,  resizable: false, variableHeight:true, headerFilter:"input"},
       { title: "Title", field: "ti", width: "50%", resizable: false, formatter:"textarea", cssClass: "paperTitle", headerFilter:"input"},
       { title: "Year", field: "py",  width: "10%", resizable: false},
+    ],
+    initialSort: [
+      {column:"ti", dir:"asc"},
+      {column:"py", dir:"desc"}
     ]
   })
+
+  window.papers.on("tableBuilt", () => { 
+    window.papers.addFilter("py", ">=", window.minyearval);
+    window.papers.addFilter("py", "<=", window.maxyearval);
+  });
 
   window.papers.on("cellClick", (e, cell) => {
     let field = cell.getField()
@@ -763,16 +771,30 @@ export function set_components_from_ai(ai) {
 }
 
 function setupNodeSearch(component) {
-  let searchoptions = document.getElementById("nodesearch")
- 
-  let nodes = component.nodes()
+  let searchoptions = document.getElementById("nodesearch");
+  let nodes = component.nodes();
+
+  let optionsArray = [];
+
   for (let i = 0; i < nodes.length; i += 1) {
-    let op = document.createElement("option")
-    op.value = nodeinfo[nodes[i]][0]
-    op.setAttribute("node", nodes[i])
-    searchoptions.appendChild(op)
+    let op = document.createElement("option");
+    op.value = nodeinfo[nodes[i]][0];
+    op.setAttribute("node", nodes[i]);
+    op.textContent = nodeinfo[nodes[i]][0]; // display text
+    optionsArray.push(op);
   }
+
+  // Sort alphabetically ignoring numbers (case-insensitive)
+  optionsArray.sort((a, b) => {
+    const stripNumbers = str => str.replace(/[^a-z]/gi, '');
+    const nameA = stripNumbers(a.textContent).toLowerCase();
+    const nameB = stripNumbers(b.textContent).toLowerCase();
+    return nameA.localeCompare(nameB);
+  });
+
+  optionsArray.forEach(op => searchoptions.appendChild(op));
 }
+
 
 export function setupCentralityTables(component) {
   // degree centrality
