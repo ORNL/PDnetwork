@@ -8,7 +8,7 @@ This tool allows users to visualize and analyze the evolution of the peridynamic
 If you use PDnetwork in your work, please cite the [Zenodo release](Todo).
 
 ## Data
-Data from Scopus, Copyright Elsevier (2024)
+Data from Scopus, Copyright Elsevier (2025)
 
 ## License
 PDnetwork is distributed under a [BSD 3-Clause license](LICENSE).
