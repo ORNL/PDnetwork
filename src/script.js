@@ -225,7 +225,7 @@ $(document).ready(function() {
   window.componentpapers = false
 
   window.minyearval = 2000
-  window.maxyearval = 2023
+  window.maxyearval = 2024
 
   $("#reset").on("click", () => {
     window.renderer.camera.ratio = 1
