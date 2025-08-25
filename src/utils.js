@@ -153,6 +153,7 @@ export function renderNetworks() {
   window.renderer = new Sigma(network, $("#network").get(0), {
     labelRenderedSizeThreshold: 0, 
     labelDensity: 0,
+    zIndex: true,
     enableHovering: false,
     labelGridCellSize: 150,
     defaultNodeColor: NODECOLOR_DEFAULT,
@@ -390,6 +391,7 @@ export function set_selected_div(node=null, refresh=false) {
       })
 
       network._nodes.get(window.selected).attributes.color = NODECOLOR_DEFAULT
+      network._nodes.get(window.selected).attributes.zIndex = 1
       network._nodes.get(window.selected).attributes.labelColor = "#000000"
     }
 
@@ -416,7 +418,8 @@ export function set_selected_div(node=null, refresh=false) {
     })
     node.attributes.color = NODECOLOR_SELECTED
     node.attributes.borderColor = NODEBORDER_SELECTED
-
+    node.attributes.zIndex = 2
+    
     window.renderer.refresh()
 
     // now update node info
@@ -725,6 +728,7 @@ export function set_components_from_ai(ai) {
     window.graph.setNodeAttribute(node, 'fullname', nodeinfo[node][0])
     window.graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
     window.graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
+    window.graph.setNodeAttribute(node, 'zIndex', 1)
     window.graph.setNodeAttribute(node, 'size', 3)
     window.graph.setNodeAttribute(node, 'color', NODECOLOR_DEFAULT)
     window.graph.setNodeAttribute(node, 'borderColor', NODEBORDER_DEFAULT)
