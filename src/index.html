@@ -15,14 +15,15 @@
     <div id="network-selector">
       <div id="lefttitle">
         <h1 id="title">Peridynamics Co-Authorship Network</h1>
-        <a id="githubholder" href="https://github.com/ORNL/PDnetwork" target="_blank"><img id="github" src="github-mark.png"></a>
+        <h1><a id="githubholder" href="https://github.com/ORNL/PDnetwork" target="_blank">(GitHub)</a></h1>
       </div>
-      <div id="components">Component:<select id="component-select"></select><button id="leftcomponent">←</button><button id="rightcomponent">→</button></div>
+      <div id="components">Component:<select id="component-select"></select><button id="leftcomponent">←</button><button id="lcccomponent">LCC</button><button id="rightcomponent">→</button></div>
     </div>
     <div id="network"></div>
   </div>
   <div id="info-half">
     <div id="topright">
+      <div id="reset">🔄</div>
       <div id="nodesearchdiv">
         <p>Scientist Selector</p><input id="nodesearchfield" list="nodesearch"/><datalist id="nodesearch" type="text" placeholder="Name"></datalist>
       </div>
@@ -30,12 +31,12 @@
         Years
         <div id="year-inputs">
           <div id="mindiv">
-            <input id="minyear" type="number" min=2000 max=2023 value=2000 />
+            <input id="minyear" type="number" min=2000 max=2024 value=2000 />
             <label for="minyear">to</label>
           </div>
 
           <div id="maxdiv">
-            <input id="maxyear" type="number" min=2000 max=2023 value=2023 />
+            <input id="maxyear" type="number" min=2000 max=2024 value=2024 />
           </div>
         </div>
       </div>

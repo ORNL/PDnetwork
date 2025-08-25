@@ -11,14 +11,14 @@
   background-color:aliceblue;
 }
 
-#github {
-  width: 1.5em;
-}
-
 #githubholder {
   display: flex;
-  padding: 0.5em;
-  margin-left: 0.5em;
+  margin-left: 1em;
+  color: #444444;
+}
+
+#githubholder:hover {
+  color: goldenrod
 }
 
 #lefttitle {
@@ -146,8 +146,9 @@ label {
   padding-right: 0.5em;
 }
 
-#leftcomponent, #rightcomponent {
-  margin-right: 0.5em;
+#leftcomponent, #rightcomponent, #lcccomponent {
+  margin-left: 0.2em;
+  margin-right: 0.2em;
 }
 
 .inactivetab {
@@ -373,6 +374,17 @@ li {
   display: flex;
   height: 5vh;
   align-items: center;
+}
+
+#reset {
+  text-align: center;
+  margin-right: 0.25em;
+  margin-left: 0.5em;
+  font-size: 1.5em;
+}
+
+#reset:hover {
+  opacity: 0.4;
 }
 
 .author {

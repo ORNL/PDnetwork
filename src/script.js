@@ -46,17 +46,29 @@ function updateYears() {
   let selected = window.selected
 
   set_components_from_ai(newlist);
+
+  let old = [window.renderer.camera.x, window.renderer.camera.y, window.renderer.camera.ratio];
   renderNetworks()
 
   if (window.selected) {
     window.selected = null
     if (window.components[window.component].nodes().includes(selected)) {
+      // window.renderer.camera.x = old[0];
+      // window.renderer.camera.y = old[1];
+      // window.renderer.camera.ratio = old[2];
       set_nodeselect_div(selected)
     }
     else {
+      let beforetab = self.tab;
       let searchnode = selectOutsideComponentID(selected)
+
       if (!searchnode) {
         set_nodeselect_div(null, true)
+        document.getElementById("component-select").value = String(window.component)
+        setComponent(0);
+      }
+      else {
+        switch_tabs(beforetab);
       }
     }
   }
@@ -64,6 +76,7 @@ function updateYears() {
     let selecteddiv = document.getElementById("selected")
     selecteddiv.innerHTML = ""
     set_nodeselect_div(window.selected, true)
+    document.getElementById("component-select").value = String(window.component)
   }
 }
 
@@ -147,23 +160,6 @@ function selectOutsideComponentID(nid) {
   return false
 }
 
-function selectOutsideComponentName(name) {
-  let nid = window.nameToId[name]
-  if (!nid) {
-    alert("Could not find node")
-    return false
-  }
-
-  for (let i = 0; i < window.components.length; i += 1) {
-    let cnodes = window.components[i].nodes()
-    if (nid in cnodes) {
-      setComponent(i)
-      set_nodeselect_div(nid)
-      return true
-    }
-  }
-}
-
 function setComponent(num) {
   cancelselect(window.selected)
   let select = $("#component-select").get(0);
@@ -231,6 +227,11 @@ $(document).ready(function() {
   window.minyearval = 2000
   window.maxyearval = 2023
 
+  $("#reset").on("click", () => {
+    window.renderer.camera.ratio = 1
+    zoomToPos(0.5, 0.5)
+  })
+
   window.table = new Tabulator("#info", {
     data: transposed,
     layout: "fitData",
@@ -263,6 +264,7 @@ $(document).ready(function() {
 
     $("#leftcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) - 1) })
     $("#rightcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) + 1) })
+    $("#lcccomponent").get(0).addEventListener("click", () => { updateComponent(0) })
 
     $("#component-select").get(0).addEventListener("change", () => updateComponent());
     $("#nodesearchfield").get(0).addEventListener("keyup", (e) => {

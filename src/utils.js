@@ -69,8 +69,8 @@ export function localMetrics(component, node) {
   stats.push("<b>All names:</b> " + node.attributes["fullname"])
   stats.push("<b>Number of collaborators:</b> " + node.undirectedDegree)
   stats.push("<b>Number of collaborative publications:</b> " + node.attributes["wdegree"])
-  stats.push("<b>Closeness Centrality:</b> " + parseFloat(node.attributes["close"]).toFixed(4))
-  stats.push("<b>Betweenness Centrality:</b> " + parseFloat(node.attributes["btwn"]).toFixed(4))
+  stats.push("<b>Closeness centrality:</b> " + parseFloat(node.attributes["close"]).toFixed(4))
+  stats.push("<b>Betweenness centrality:</b> " + parseFloat(node.attributes["btwn"]).toFixed(4))
 
   return stats 
 }
@@ -285,7 +285,7 @@ export function toggle_componentpapers(show) {
         let filters = window.table.getFilters();
         console.log(window.table.getFilters())
         window.table.setFilter(paperInComponent, nodes)
-        window.table.addFilter("py", ">=", window.maxyearval);
+        window.table.addFilter("py", ">=", window.minyearval);
         window.table.addFilter("py", "<=", window.maxyearval);
         console.log(window.table.getFilters())
       }
@@ -637,7 +637,7 @@ export function setup_selected_tabs(node) {
     nlist.push([text, name])
   })
 
-  nlist.sort((a, b) => a[1] > b[1] ? 1 : -1)
+  nlist.sort((a, b) => a[1].replace(/[^a-z]/ig, "") > b[1].replace(/\W/ig, "") ? 1 : -1)
   
   let neighbors = document.createElement("ul")
   for (let i = 0; i < nlist.length; i += 1) {
@@ -820,7 +820,7 @@ export function setupCentralityTables(component) {
 
   var columns = [
     { title:"", field:"", formatter:"rownum", width: "2%", headerSort: false},
-    { title: "Name", field: "name", formatter: authorCell2, resizable: true, headerFilter:"input" },
+    { title: "Name", field: "name", formatter: authorCell2, resizable: false, headerFilter:"input", width: "30%" },
     { title: "\# Co-Authors", field: "degree", resizable: false, headerSortStartingDir:"desc" },
     { title: "\# Co-Publications", field: "wdegree", resizable: false, headerSortStartingDir:"desc"},
     { title: "Close", field: "close", resizable: false, headerSortStartingDir:"desc"},
