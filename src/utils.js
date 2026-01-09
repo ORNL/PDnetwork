@@ -43,7 +43,9 @@ function numPaperWithAuthors(nodes) {
 
 export function componentMetrics(component) {
   let stats = []
-  let nodes = component.nodes()
+  let nodes = [... new Set(component.nodes())]
+
+  console.log(nodes)
 
   stats.push("<b>Number of authors:</b> " + nodes.length)
   stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
@@ -54,7 +56,7 @@ export function componentMetrics(component) {
 
 export function globalMetrics() {
   let stats = []
-  let nodes = window.graph.nodes()
+  let nodes = [... new Set(window.graph.nodes())]
 
   stats.push("<b>Number of authors:</b> " + nodes.length)
   stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
@@ -80,12 +82,14 @@ function authorCell2(cellname, params, onRendered) {
   let cell = document.createElement("div")
   cell.className = "author-cell"
 
+  let key = cellname.getData().key
+
   for (let i = 0; i < names.length; i += 1) {
     let author = document.createElement("div")
     author.className = "author"
     author.innerHTML = `${names[i]}`
-    author.key = i
-    author.setAttribute("node", parseInt(window.nameToId[names[i]]))
+    author.key = key
+    author.setAttribute("node", parseInt(key))
     cell.appendChild(author)
   }
 
@@ -427,8 +431,14 @@ export function set_selected_div(node=null, refresh=false) {
     let heading = document.createElement("h3")
     heading.id = "selectedName"
 
-    let name = node.attributes["fullname"].split("; ")[0]
-    heading.innerHTML = "<b>Selected Node:</b> " + name.split("; ")[0]
+    let names = node.attributes["fullname"].split("; ")
+
+    let nn = names[0]
+    if (names.length > 1) {
+      nn = names[1];
+    }
+  
+    heading.innerHTML = "<b>Selected Node:</b> " + nn
     let localinfo = localMetrics(network, node)
 
     let bullets = document.createElement("ul")
@@ -515,7 +525,6 @@ export function cancelselect(node) {
 }
 
 function authorCell3(cellname, params, onRendered) {
-  console.log(cellname.getValue(), cellname["_cell"].row.position,)
   let names = cellname.getValue().split("; ").slice(0, 10)
   let cell = document.createElement("div")
   cell.className = "author-cell"
@@ -732,6 +741,7 @@ export function set_components_from_ai(ai) {
     window.graph.setNodeAttribute(node, 'size', 3)
     window.graph.setNodeAttribute(node, 'color', NODECOLOR_DEFAULT)
     window.graph.setNodeAttribute(node, 'borderColor', NODEBORDER_DEFAULT)
+    console.log(nodeinfo[node][0])
     window.nameToId[nodeinfo[node][0]] = node
     window.nameToId[ oneName(nodeinfo[node][0]).trim()] = node
   } );
@@ -815,12 +825,14 @@ export function setupCentralityTables(component) {
 
     let obj = {}
     obj.name = nattr.attributes["label"]
+    obj.key = nattr.key
     obj.degree = nattr.undirectedDegree
     obj.wdegree = nattr.attributes["wdegree"]
     obj.btwn = Math.round(nattr.attributes["btwn"] * (nodes.length - 1) * 10) / 10
     obj.close = Math.round(nattr.attributes["close"] * (nodes.length - 1) * 10) / 10
     ranking.push(obj)
   }
+
 
   var columns = [
     { title:"", field:"", formatter:"rownum", width: "2%", headerSort: false},
