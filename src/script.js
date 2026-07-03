@@ -272,6 +272,12 @@ $(document).ready(function() {
         searchScientist(e.target);
       }
     });
+    $("#nodesearchfield").get(0).addEventListener("input", (e) => {
+      if (e.inputType && e.inputType !== "insertReplacementText") return;
+      if (window.nameToId[e.target.value]) {
+        searchScientist(e.target)
+      }
+    });
 
     renderNetworks()
     switch_tabs("index", true)
