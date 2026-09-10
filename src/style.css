@@ -362,6 +362,15 @@ li {
   justify-content: center;
 }
 
+.rebuilding {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.rebuilding input, .rebuilding select, .rebuilding button {
+  cursor: wait;
+}
+
 .paperTitle {
   color: black;
 }

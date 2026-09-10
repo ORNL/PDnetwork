@@ -20,7 +20,55 @@ function searchScientist(input) {
   }
 }
 
-function updateYears() {
+let lockReleasedAt = 0
+
+// A rebuild blocks the main thread start to finish, so disable the controls that
+// trigger it - a disabled control dispatches no events, which drops any queued
+// double-click - and yield a frame so the locked state paints before the freeze.
+function runLocked(controlIds, containerId, work) {
+  let controls = controlIds.map((id) => document.getElementById(id))
+
+  // already rebuilding, ignore anything that slipped through
+  if (controls.some((control) => control.disabled)) {
+    return
+  }
+
+  controls.forEach((control) => { control.disabled = true })
+  document.getElementById(containerId).classList.add("rebuilding")
+
+  requestAnimationFrame(() => setTimeout(() => {
+    try {
+      work()
+    }
+    finally {
+      // Clicks made during the freeze sit in the queue undispatched until the main
+      // thread frees up. Releasing inline would hand them re-enabled controls and
+      // start a second rebuild, so give the queue a turn to drain first.
+      setTimeout(() => {
+        lockReleasedAt = performance.now()
+        controls.forEach((control) => { control.disabled = false })
+        document.getElementById(containerId).classList.remove("rebuilding")
+      }, 0)
+    }
+  }, 0))
+}
+
+// Backstop for whatever still slips through the drain. timeStamp is set when the
+// browser creates the event, not when it dispatches, so a click made during the
+// lock stays identifiable as stale however late it arrives.
+function staleEvent(event) {
+  return event && event.timeStamp < lockReleasedAt
+}
+
+function updateYears(event) {
+  if (staleEvent(event)) {
+    return
+  }
+
+  runLocked(["minyear", "maxyear"], "year-filter", rebuildYears)
+}
+
+function rebuildYears() {
   window.minyearval = parseInt(document.getElementById("minyear").value)
   window.maxyearval = parseInt(document.getElementById("maxyear").value)
 
@@ -193,7 +241,11 @@ function redraw_tables() {
   }
 }
 
-function updateComponent(number=null) {
+function updateComponent(number=null, event=null) {
+  if (staleEvent(event)) {
+    return
+  }
+
   let selectdiv = $("#component-select").get(0)
 
   if (number == null) {
@@ -205,9 +257,12 @@ function updateComponent(number=null) {
   }
   let value = selectdiv.options[number].value
 
-  if (value != window.component) {
-    setComponent(value)
+  // nothing to rebuild, so don't lock - clicking the arrow at either end lands here
+  if (value == window.component) {
+    return
   }
+
+  runLocked(["component-select", "leftcomponent", "rightcomponent", "lcccomponent"], "components", () => setComponent(value))
 }
 
 
@@ -259,14 +314,14 @@ $(document).ready(function() {
   });
 
   window.table.on("tableBuilt", () => {
-    $("#minyear").get(0).addEventListener("change", () => updateYears());
-    $("#maxyear").get(0).addEventListener("change", () => updateYears());
+    $("#minyear").get(0).addEventListener("change", (e) => updateYears(e));
+    $("#maxyear").get(0).addEventListener("change", (e) => updateYears(e));
 
-    $("#leftcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) - 1) })
-    $("#rightcomponent").get(0).addEventListener("click", () => { updateComponent(parseInt(window.component) + 1) })
-    $("#lcccomponent").get(0).addEventListener("click", () => { updateComponent(0) })
+    $("#leftcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(window.component) - 1, e) })
+    $("#rightcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(window.component) + 1, e) })
+    $("#lcccomponent").get(0).addEventListener("click", (e) => { updateComponent(0, e) })
 
-    $("#component-select").get(0).addEventListener("change", () => updateComponent());
+    $("#component-select").get(0).addEventListener("change", (e) => updateComponent(null, e));
     $("#nodesearchfield").get(0).addEventListener("keyup", (e) => {
       if (e.key == "Enter" || e.keyCode == 13) {
         searchScientist(e.target);
