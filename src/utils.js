@@ -48,7 +48,7 @@ export function componentMetrics(component) {
   console.log(nodes)
 
   stats.push("<b>Number of authors:</b> " + nodes.length)
-  stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
+  stats.push("<b>Number of publications:</b> " + numPaperWithAuthors(nodes))
   stats.push("<b>Number of links:</b> " + component.edges().length)
 
   return stats
@@ -59,7 +59,7 @@ export function globalMetrics() {
   let nodes = [... new Set(window.graph.nodes())]
 
   stats.push("<b>Number of authors:</b> " + nodes.length)
-  stats.push("<b>Number of papers:</b> " + numPaperWithAuthors(nodes))
+  stats.push("<b>Number of publications:</b> " + numPaperWithAuthors(nodes))
   stats.push("<b>Number of links:</b> " + window.graph.edges().length)
 
   return stats
