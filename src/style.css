@@ -412,3 +412,13 @@ li {
   display: flex;
   flex-wrap: wrap;
 }
+
+#network-half[hidden], #info-half[hidden] {
+  display: none;
+}
+#update-error {
+  padding: 12px;
+  background: #fff0f0;
+  color: #8b1515;
+  border: 1px solid #8b1515;
+}

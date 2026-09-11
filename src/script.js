@@ -1,44 +1,169 @@
-import peri from "./scopus.json"
+import { loadPublications, transformData, filterPublicationAuthors, buildNetworks } from "./data.js"
 
-import { hover_node, cancelselect, paperInComponent, toggle_componentpapers, setupCentralityTables, switch_tabs, set_selected_div as set_nodeselect_div, transformData, zoomToPos, renderNetworks, set_components_from_ai } from "./utils.js"
+import { setupCentralityTables, switch_tabs, set_selected_div as set_nodeselect_div, setupNetworkControls, configureUI, ui } from "./utils.js"
 
 import './style.css';
+import { assignAuthorMetrics } from './metric.js';
+import { createNetworkView } from './network.js';
 
-function searchScientist(input) {
-  let name = input.value
+// Application state is owned here and passed explicitly to the UI helpers.
+export const state = {
+  publications: null, publicationRows: [], filteredPublications: [], publicationAuthors: {},
+  minYear: 2000, maxYear: 2025,
+  graph: null, components: [], nameToId: {}, componentIndex: 0, selectedAuthor: null,
+  componentOnly: false, tab: "info",
+}
 
-  let nid = window.nameToId[name]
-  if (window.components[window.component].nodes().includes(nid)) {
-    input.value = ""
-    set_nodeselect_div(nid, true)
+const network = createNetworkView(document.getElementById("network"), {
+  onSelect: id => set_nodeselect_div(id),
+  canInteract: () => !updating,
+})
+
+const measuredComponents = new WeakSet()
+
+function updateError(message = "") {
+  const alert = document.getElementById("update-error")
+  alert.textContent = message
+  alert.hidden = !message
+}
+
+async function renderState(selection, controls = false) {
+  const component = state.components[state.componentIndex]
+  if (controls) setupNetworkControls()
+  document.getElementById("component-select").value = String(state.componentIndex)
+  document.getElementById("minyear").value = String(state.minYear)
+  document.getElementById("maxyear").value = String(state.maxYear)
+  network.show(component)
+  // Drain both operations before rollback, including synchronous view failures.
+  const results = await Promise.allSettled([
+    Promise.resolve().then(() => ui.table.replaceData(visiblePublications())),
+    Promise.resolve().then(() => setupCentralityTables(component)),
+  ])
+  const failure = results.find(result => result.status === "rejected")
+  if (failure) throw failure.reason
+  set_nodeselect_div(selection, true)
+  redraw_tables()
+}
+
+function visiblePublications() {
+  const component = state.components[state.componentIndex]
+  return state.componentOnly
+    ? state.filteredPublications.filter(paper => component.hasNode(String(paper.ai[0])))
+    : state.filteredPublications
+}
+
+// Startup, year changes, component navigation, and cross-component author
+// selection all use this sequence. Add new dependent views in the render block.
+export async function updateNetwork({
+  minYear = state.minYear, maxYear = state.maxYear,
+  componentIndex, selectedAuthor = state.selectedAuthor,
+} = {}) {
+  if (!Number.isInteger(minYear) || !Number.isInteger(maxYear) || minYear > maxYear) {
+    throw new RangeError("Enter a valid year range with the start year before the end year.")
   }
-  else {
-    let found = selectOutsideComponentID(nid)
-    if (found) {
-      input.value = ""
+  const rebuild = !state.graph || minYear !== state.minYear || maxYear !== state.maxYear
+  const publicationAuthors = rebuild
+    ? filterPublicationAuthors(state.publications, minYear, maxYear)
+    : state.publicationAuthors
+  const networks = rebuild ? buildNetworks(publicationAuthors) : state
+  const components = networks.components
+
+  // On a year change, follow a surviving author even if component ordering changed.
+  // Without an author, keep the component containing the previous component's
+  // first surviving node. If it disappeared entirely, fall back to the largest.
+  let index = componentIndex
+  if (index === undefined) {
+    index = selectedAuthor == null ? -1 : components.findIndex(graph => graph.hasNode(String(selectedAuthor)))
+    if (index < 0 && rebuild) {
+      const oldNodes = state.components[state.componentIndex]?.nodes() || []
+      const survivor = oldNodes.find(node => networks.graph.hasNode(node))
+      index = survivor === undefined ? 0 : components.findIndex(graph => graph.hasNode(survivor))
     }
+    if (index < 0) index = state.componentIndex
+  }
+  index = Math.max(0, Math.min(Number.isInteger(Number(index)) ? Number(index) : 0, components.length - 1))
+  const component = components[index]
+  const selection = selectedAuthor != null && component.hasNode(String(selectedAuthor)) ? String(selectedAuthor) : null
+
+  // Prepare calculations before changing the currently displayed state. Components
+  // are immutable between year rebuilds, so revisits can reuse their metrics.
+  if (!measuredComponents.has(component)) {
+    assignAuthorMetrics(component)
+    measuredComponents.add(component)
+  }
+  const previous = { ...state }
+  try {
+    network.select(null)
+    Object.assign(state, {
+      minYear, maxYear, publicationAuthors,
+      graph: networks.graph, components, nameToId: networks.nameToId,
+      componentIndex: index, selectedAuthor: null,
+    })
+    if (rebuild) {
+      state.filteredPublications = state.publicationRows.filter(paper =>
+        Object.prototype.hasOwnProperty.call(publicationAuthors, paper.id)
+      )
+    }
+    await renderState(selection, rebuild)
+    updateError()
+  } catch (error) {
+    Object.assign(state, previous)
+    try {
+      if (previous.graph) {
+        await renderState(previous.selectedAuthor, true)
+        switch_tabs(previous.tab)
+      } else {
+        network.destroy()
+        await ui.table.replaceData([])
+        document.getElementById("network-half").hidden = true
+        document.getElementById("info-half").hidden = true
+      }
+      updateError(previous.graph
+        ? "Could not update the network. The previous view has been restored. Please try again."
+        : "Could not load the network. Please reload the page to try again.")
+    } catch (recoveryError) {
+      // A broken renderer/table must not remain visible as if it were current.
+      document.getElementById("network-half").hidden = true
+      document.getElementById("info-half").hidden = true
+      updateError("Could not restore the network view. Please reload the page.")
+      console.error("Could not restore the network", recoveryError)
+    }
+    throw error
   }
 }
 
-let lockReleasedAt = 0
+function searchScientist(input) {
+  const nid = state.nameToId[input.value]
+  if (nid !== undefined && selectOutsideComponentID(nid)) input.value = ""
+}
 
-// A rebuild blocks the main thread start to finish, so disable the controls that
-// trigger it - a disabled control dispatches no events, which drops any queued
-// double-click - and yield a frame so the locked state paints before the freeze.
-function runLocked(controlIds, containerId, work) {
-  let controls = controlIds.map((id) => document.getElementById(id))
+let lockReleasedAt = 0
+let updating = false
+const updateControlIds = ["minyear", "maxyear", "component-select", "leftcomponent", "rightcomponent", "lcccomponent", "nodesearchfield", "cpcheckbox"]
+
+// Graph calculations block the main thread. Paint the busy state first and
+// keep all update controls locked until the asynchronous table updates finish.
+function runLocked(work) {
+  let controls = updateControlIds.map(id => document.getElementById(id)).filter(Boolean)
 
   // already rebuilding, ignore anything that slipped through
-  if (controls.some((control) => control.disabled)) {
+  if (updating) {
     return
   }
 
+  updating = true
   controls.forEach((control) => { control.disabled = true })
-  document.getElementById(containerId).classList.add("rebuilding")
+  document.getElementById("app").classList.add("rebuilding")
 
-  requestAnimationFrame(() => setTimeout(() => {
+  requestAnimationFrame(() => setTimeout(async () => {
     try {
-      work()
+      await work()
+    }
+    catch (error) {
+      console.error("Could not update the network", error)
+      if (document.getElementById("update-error").hidden) {
+        updateError("Could not update the network. Please try again or reload the page.")
+      }
     }
     finally {
       // Clicks made during the freeze sit in the queue undispatched until the main
@@ -46,8 +171,12 @@ function runLocked(controlIds, containerId, work) {
       // start a second rebuild, so give the queue a turn to drain first.
       setTimeout(() => {
         lockReleasedAt = performance.now()
-        controls.forEach((control) => { control.disabled = false })
-        document.getElementById(containerId).classList.remove("rebuilding")
+        updating = false
+        updateControlIds.forEach(id => {
+          const control = document.getElementById(id)
+          if (control) control.disabled = false
+        })
+        document.getElementById("app").classList.remove("rebuilding")
       }, 0)
     }
   }, 0))
@@ -57,80 +186,23 @@ function runLocked(controlIds, containerId, work) {
 // browser creates the event, not when it dispatches, so a click made during the
 // lock stays identifiable as stale however late it arrives.
 function staleEvent(event) {
-  return event && event.timeStamp < lockReleasedAt
+  return updating || (event && event.timeStamp < lockReleasedAt)
 }
 
 function updateYears(event) {
-  if (staleEvent(event)) {
-    return
-  }
-
-  runLocked(["minyear", "maxyear"], "year-filter", rebuildYears)
-}
-
-function rebuildYears() {
-  window.minyearval = parseInt(document.getElementById("minyear").value)
-  window.maxyearval = parseInt(document.getElementById("maxyear").value)
-
-  let filters = window.table.getFilters();
-  for (let i = 0; i < filters.length; i += 1) {
-    if (filters[i].field == "py") {
-      table.removeFilter("py", filters[i].type, filters[i].value)
-    }
-  }
-  
-  // update table
-  let pa_list = window.pa_list;
-  let newlist = {}
-  for (const [key, value] of Object.entries(pa_list.py)) {
-    if (value >= window.minyearval && value <= window.maxyearval) {
-      newlist[key] = pa_list.ai[key]
-    }
-  }
-
-  window.table.addFilter("py", ">=", window.minyearval);
-  window.table.addFilter("py", "<=", window.maxyearval);
-
-  let selected = window.selected
-
-  set_components_from_ai(newlist);
-
-  let old = [window.renderer.camera.x, window.renderer.camera.y, window.renderer.camera.ratio];
-  renderNetworks()
-
-  if (window.selected) {
-    window.selected = null
-    if (window.components[window.component].nodes().includes(selected)) {
-      // window.renderer.camera.x = old[0];
-      // window.renderer.camera.y = old[1];
-      // window.renderer.camera.ratio = old[2];
-      set_nodeselect_div(selected)
-    }
-    else {
-      let beforetab = self.tab;
-      let searchnode = selectOutsideComponentID(selected)
-
-      if (!searchnode) {
-        set_nodeselect_div(null, true)
-        document.getElementById("component-select").value = String(window.component)
-        setComponent(0);
-      }
-      else {
-        switch_tabs(beforetab);
-      }
-    }
-  }
-  else {
-    let selecteddiv = document.getElementById("selected")
-    selecteddiv.innerHTML = ""
-    set_nodeselect_div(window.selected, true)
-    document.getElementById("component-select").value = String(window.component)
+  if (staleEvent(event)) return
+  const minInput = document.getElementById("minyear")
+  const maxInput = document.getElementById("maxyear")
+  const minYear = minInput.valueAsNumber
+  const maxYear = maxInput.valueAsNumber
+  maxInput.setCustomValidity(minYear > maxYear ? "End year must be at least the start year." : "")
+  if (!minInput.reportValidity() || !maxInput.reportValidity() || !Number.isInteger(minYear) || !Number.isInteger(maxYear)) return
+  if (minYear !== state.minYear || maxYear !== state.maxYear) {
+    runLocked(() => updateNetwork({ minYear, maxYear }))
   }
 }
-
 
 function authorCell(cellname, params, onRendered) {
-  //console.log(cellname.getValue(), cellname["_cell"].row.position)
   let names = cellname.getValue().split("; ").slice(0, 10)
   let cell = document.createElement("div")
   cell.className = "author-cell"
@@ -139,48 +211,25 @@ function authorCell(cellname, params, onRendered) {
     let author = document.createElement("div")
     author.className = "author"
     author.innerHTML = `${names[i]}; `
-    author.setAttribute("node", parseInt(window.nameToId[names[i]]))
+    author.setAttribute("node", parseInt(state.nameToId[names[i]]))
     cell.appendChild(author)
   }
 
-  let nodes = window.components[window.component].nodes()
-  let ais = cellname.getRow().getData().ai
-
-  let incomponent = true
-  if (!nodes.includes(String(ais[0]))) {
-    cell.classList.add("nohover")
-    incomponent = false
-  }
-    
+  const ais = cellname.getData().ai
+  const component = state.components[state.componentIndex]
+  if (!component.hasNode(String(ais[0]))) cell.classList.add("nohover")
   onRendered(() => {
-    let authors = cellname.getElement().children[0].children 
-
+    const authors = cell.children
     for (let j = 0; j < authors.length; j += 1) {
-      let network = window.components[window.component]
-      let node = cellname.getData().ai[j]
-      let nodeobj = network._nodes.get(node.toString())
-
-      if (incomponent) {
-        authors[j].addEventListener("mouseenter", () => {
-          if (nodeobj !== undefined) {
-            hover_node(nodeobj, true) 
-          }
-        })
-        authors[j].addEventListener("mouseleave", () => {
-          if (nodeobj !== undefined) {
-            hover_node(nodeobj, false) 
-          }
-        })
-
-        authors[j].addEventListener("click", () => {
-          set_nodeselect_div(node.toString())
+      const node = String(ais[j])
+      for (const [event, enable] of [["mouseenter", true], ["mouseleave", false]]) {
+        authors[j].addEventListener(event, () => {
+          network.hover(node, enable)
         })
       }
-      else {
-        authors[j].addEventListener("click", () => {
-          selectOutsideComponentID(node.toString())
-        })
-      }
+      authors[j].addEventListener("click", event => {
+        if (!staleEvent(event)) selectOutsideComponentID(node)
+      })
     }
   })
 
@@ -188,107 +237,57 @@ function authorCell(cellname, params, onRendered) {
 }
 
 function selectOutsideComponentID(nid) {
-  if (!nid) {
-    alert("Could not find node")
-    console.log("From alert:", nid)
-    return false
+  if (nid == null || updating) return false
+  const componentIndex = state.components.findIndex(graph => graph.hasNode(String(nid)))
+  if (componentIndex < 0) return false
+  if (componentIndex === state.componentIndex) {
+    set_nodeselect_div(String(nid), true)
+  } else {
+    runLocked(() => updateNetwork({ componentIndex, selectedAuthor: String(nid) }))
   }
-
-  for (let i = 0; i < window.components.length; i += 1) {
-    let cnodes = window.components[i].nodes()
-
-    if (cnodes.includes(nid)) {
-      setComponent(i)
-      console.log(nid, cnodes)
-      set_nodeselect_div(nid)
-      return true
-    }
-  }
-
-  return false
-}
-
-function setComponent(num) {
-  cancelselect(window.selected)
-  let select = $("#component-select").get(0);
-  select.value = num;
-
-  let selecteddiv = document.getElementById("selected")
-  selecteddiv.innerHTML = ""
-
-  window.component = num;
-  set_nodeselect_div(window.selected, true)
-  setupCentralityTables(window.components[num])
-
-  if (window.componentpapers) {
-    toggle_componentpapers(false)
-    toggle_componentpapers(true)
-    window.table.setFilter(paperInComponent, window.components[num].nodes())
-    window.table.addFilter("py", ">=", window.minyearval);
-    window.table.addFilter("py", "<=", window.maxyearval);
-  }
-
-  redraw_tables()
-
-  renderNetworks()
+  return true
 }
 
 function redraw_tables() {
-  window.table.redraw(true)
+  ui.table.redraw(true)
 
-  if (window.papers) {
-    window.papers.redraw(true)
+  if (ui.papers && ui.papersReady) {
+    ui.papers.redraw(true)
   }
 }
 
-function updateComponent(number=null, event=null) {
-  if (staleEvent(event)) {
-    return
-  }
-
-  let selectdiv = $("#component-select").get(0)
-
-  if (number == null) {
-    number = selectdiv.selectedIndex;
-  }
-  else {
-    number = Math.max(number, 0)
-    number = Math.min(number, window.components.length - 1)
-  }
-  let value = selectdiv.options[number].value
-
-  // nothing to rebuild, so don't lock - clicking the arrow at either end lands here
-  if (value == window.component) {
-    return
-  }
-
-  runLocked(["component-select", "leftcomponent", "rightcomponent", "lcccomponent"], "components", () => setComponent(value))
+function updateComponent(number = null, event = null) {
+  if (staleEvent(event)) return
+  const requested = number ?? Number(document.getElementById("component-select").value)
+  const componentIndex = Math.max(0, Math.min(requested, state.components.length - 1))
+  if (componentIndex === state.componentIndex) return
+  runLocked(() => updateNetwork({ componentIndex }))
 }
-
 
 $(document).ready(function() {
-  window.pa_list = JSON.parse(peri)
-  let transposed = transformData(window.pa_list)
-  
-  set_components_from_ai(window.pa_list["ai"])
-
-  window.component = 0
-  window.selected = null
-  set_nodeselect_div()
-
-  window.tab = "info"
-  window.componentpapers = false
-
-  window.minyearval = 2000
-  window.maxyearval = 2025
-
-  $("#reset").on("click", () => {
-    window.renderer.camera.ratio = 1
-    zoomToPos(0.5, 0.5)
+  state.publications = loadPublications()
+  state.publicationRows = transformData(state.publications)
+  configureUI(state, {
+    isUpdating: () => updating,
+    onHighlight: id => network.select(id),
+    onHover: (id, enabled) => network.hover(id, enabled),
+    onZoom: id => network.zoomTo(id),
+    onComponentOnlyChange: (enabled, event) => {
+      if (staleEvent(event)) return
+      state.componentOnly = enabled
+      runLocked(async () => {
+        await ui.table.replaceData(visiblePublications())
+        redraw_tables()
+      })
+    },
   })
 
-  window.table = new Tabulator("#info", {
-    data: transposed,
+  $("#reset").on("click", () => {
+    if (!updating) network.resetCamera()
+  })
+
+  ui.table = new Tabulator("#info", {
+    data: [],
     layout: "fitData",
     height: "100%",
     columns: [
@@ -303,7 +302,7 @@ $(document).ready(function() {
     ]
   })
 
-  window.table.on("cellClick", (e, cell) => {
+  ui.table.on("cellClick", (e, cell) => {
     let field = cell.getField()
     if (field == "ti") {
       window.open("https://doi.org/" + cell.getRow().getData().doi, "_blank");
@@ -313,12 +312,16 @@ $(document).ready(function() {
     }
   });
 
-  window.table.on("tableBuilt", () => {
+  ui.table.on("tableBuilt", () => {
+    runLocked(async () => {
+      await updateNetwork()
+      switch_tabs("index", true)
+    })
     $("#minyear").get(0).addEventListener("change", (e) => updateYears(e));
     $("#maxyear").get(0).addEventListener("change", (e) => updateYears(e));
 
-    $("#leftcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(window.component) - 1, e) })
-    $("#rightcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(window.component) + 1, e) })
+    $("#leftcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(state.componentIndex) - 1, e) })
+    $("#rightcomponent").get(0).addEventListener("click", (e) => { updateComponent(parseInt(state.componentIndex) + 1, e) })
     $("#lcccomponent").get(0).addEventListener("click", (e) => { updateComponent(0, e) })
 
     $("#component-select").get(0).addEventListener("change", (e) => updateComponent(null, e));
@@ -329,27 +332,29 @@ $(document).ready(function() {
     });
     $("#nodesearchfield").get(0).addEventListener("input", (e) => {
       if (e.inputType && e.inputType !== "insertReplacementText") return;
-      if (window.nameToId[e.target.value]) {
+      if (state.nameToId[e.target.value]) {
         searchScientist(e.target)
       }
     });
 
-    renderNetworks()
-    switch_tabs("index", true)
 
     $("#infotab").get(0).addEventListener("click", () => {
+      if (updating) return
       switch_tabs("info")
       redraw_tables()
     })
     $("#indextab").get(0).addEventListener("click", () => {
+      if (updating) return
       switch_tabs("index")
       redraw_tables()
     })
     $("#neighbortab").get(0).addEventListener("click", () => {
+      if (updating) return
       switch_tabs("neighbor")
       redraw_tables()
     })
     $("#papertab").get(0).addEventListener("click", () => {
+      if (updating) return
       switch_tabs("paper")
       redraw_tables()
     })
