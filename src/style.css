@@ -1,0 +1,424 @@
+#app {
+  max-width: 99vw;
+  display: flex;
+}
+
+#network-half {
+  /*border: 1px solid red;*/
+  min-width: 99vh;
+  display: flex;
+  flex-direction: column;
+  background-color:aliceblue;
+}
+
+#githubholder {
+  display: flex;
+  margin-left: 1em;
+  color: #444444;
+}
+
+#githubholder:hover {
+  color: goldenrod
+}
+
+#lefttitle {
+  display: flex;
+}
+
+#github:hover {
+  width: 1.5em;
+  opacity: 0.4;
+}
+
+#network-selector {
+  /*border: 1px solid green;*/
+  height: 5vh;
+  display: flex;
+  background-color: lightblue;
+  justify-content: space-between;
+}
+
+h1 {
+  font-size: 1em;
+}
+
+label {
+  margin-left: 0.25em;
+  color: black;
+}
+
+#nodesearchdiv {
+  display: flex;
+  align-items: center;
+  height: 2em;
+  flex: 1;
+  padding-left: 0.5em;
+}
+
+#nodesearchfield {
+  width: 12vw;
+  max-width: 12vw;
+  margin-left: 0.5em;
+}
+
+#title {
+  flex: 2;
+  text-align: left;
+  padding-left: 0.5em;
+}
+
+#site-info {
+  font-size: 1.75em;
+  height: 4vh;
+  margin-right: 0.25em;
+  color: black;
+}
+
+#site-info:hover {
+  color:goldenrod;
+}
+
+#canceldiv {
+  margin-top: 1em;
+  display: flex;
+  align-items: center;
+}
+
+#cancelbutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-color: orangered;
+  border-radius: 0.5em;
+}
+
+#cancelbutton:hover {
+  background-color: orangered;
+}
+
+#webbutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-color: limegreen;
+  border-width: 2px;
+  border-radius: 0.5em;
+}
+
+#webbutton:hover {
+  background-color: limegreen
+}
+
+#zoombutton {
+  margin-left: 1em;
+  height: 2em;
+  width: 2.5em;
+  background-color: white;
+  border-radius: 0.5em;
+  border-color: magenta;
+}
+
+#zoombutton:hover {
+  background-color: magenta;
+}
+
+
+#canceldiv>h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 1.2em;
+}
+
+#components {
+  height: 100%;
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+#component-select {
+  margin-left: 0.75em;
+  margin-right: 0.75em;
+  font-size: 1em;
+  padding-right: 0.5em;
+}
+
+#leftcomponent, #rightcomponent, #lcccomponent {
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+
+.inactivetab {
+  display: none;
+}
+
+.hiddenbutton.tab2 {
+  display: none;
+}
+
+.activebutton {
+  display: block;
+}
+
+#selected {
+  /*border: 1px solid yellow;*/
+  height: 28vh;
+  margin-left: 1vh;
+}
+
+#flexrow {
+  display: flex;
+}
+
+#flexrow>div {
+  margin-right: 4vh;
+}
+
+#network {
+  flex: 1;
+  background-color:whitesmoke;
+}
+
+#info-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: lightblue;
+}
+
+#info-stuff {
+  display: flex;
+  flex-direction: column;
+  width: 99%;
+}
+
+#info-half {
+  display: flex;
+  flex-direction: column;
+  background-color:aliceblue;
+  height: 95vh;
+  flex: 1;
+  max-width: 49vw;
+  padding-left: 0.25em;
+}
+
+.tab, .tab2 {
+  background-color: silver;
+  padding: 0.5em;
+  border-top-left-radius: 0.3em;
+  border-top-right-radius: 0.3em;
+  display: flex;
+  align-items: center;
+  font-size: 1em;
+}
+
+.activebutton {
+  background-color:aquamarine;
+}
+
+#neighbor p {
+  margin-left: 1em;
+}
+
+#neighbor li {
+  margin: 0.5em;
+}
+
+#neighbor li div {
+  margin-left: 0.5em;
+}
+
+#neighbor {
+  overflow-y: scroll;
+  max-height: 58vh;
+}
+
+.activetab {
+  display: block;
+}
+
+#info, #paper {
+  max-height: 58vh;
+  overflow: hidden;
+}
+
+#indexholder {
+  height: 58vh;
+}
+
+#index {
+  height: 58vh;
+}
+
+#tabs {
+  /*border: 1px dashed gray;*/
+  height: 3vh;
+  display: flex;
+}
+
+#tabsspace {
+  flex: 1;
+}
+
+#infoholder, #paperholder {
+  height: 58vh;
+}
+
+#info-filters {
+  flex: 1;
+  display: flex;
+}
+
+#space {
+  flex: 1;
+  background-color: black;
+}
+
+#filters {
+  margin-left: 1em;
+  margin-right: 2em;
+  margin-top: 0.5em;
+  display: flex;
+  justify-content: center;
+}
+
+#mindiv {
+  margin: 0.5em;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+
+#maxdiv {
+  margin-right: 0.5em;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+input {
+  max-width: 3.5vw;
+  text-align: center;
+  height: 1.5em;
+}
+
+body {
+  min-width: 400px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  font-style: inherit;
+  font-weight: inherit;
+  font-family: inherit;
+}
+
+#componentpapers {
+  margin-left: 0.1em;
+  font-size: 0.9em;
+  display: flex;
+  align-items: center;
+}
+
+a:hover {
+  color: fuchsia;
+}
+
+#neighbor li:hover {
+  color: #55AA00;
+}
+
+#selectedName {
+  font-weight: normal;
+}
+
+.tabulator-col-content {
+  display: flex;
+  color: black;
+}
+
+.tabulator-header-filter>input {
+  max-width: 90%;
+}
+
+li {
+  color: black;
+  width:fit-content;
+}
+
+#year-filter {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+#year-inputs {
+  display: flex;
+  justify-content: center;
+}
+
+.rebuilding {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.rebuilding input, .rebuilding select, .rebuilding button {
+  cursor: wait;
+}
+
+.paperTitle {
+  color: black;
+}
+
+.paperTitle:hover {
+  color: blue;
+}
+
+#topright {
+  display: flex;
+  height: 5vh;
+  align-items: center;
+}
+
+#reset {
+  text-align: center;
+  margin-right: 0.25em;
+  margin-left: 0.5em;
+  font-size: 1.5em;
+}
+
+#reset:hover {
+  opacity: 0.4;
+}
+
+.author {
+  margin-right: 0.25em;
+}
+
+.author:hover {
+  color: fuchsia;
+}
+
+.nohover > .author:hover {
+  color: darkcyan;
+}
+
+.author-cell {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#network-half[hidden], #info-half[hidden] {
+  display: none;
+}
+#update-error {
+  padding: 12px;
+  background: #fff0f0;
+  color: #8b1515;
+  border: 1px solid #8b1515;
+}
