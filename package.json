@@ -17,12 +17,6 @@
     "tabulator-tables": "^6.3.0"
   },
   "scripts": {
-    "build-dataset": "node scripts/build-dataset.js",
-    "build-data": "node scripts/build-data.js",
-    "build-nodeinfo": "node scripts/build-nodeinfo.js",
-    "postinstall": "node scripts/build-nodeinfo.js",
-    "prestart": "node scripts/build-nodeinfo.js",
-    "prebuild": "node scripts/build-nodeinfo.js",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "start": "webpack serve --open --mode development",
