@@ -1,14 +1,16 @@
 import Graph from "graphology";
 import subgraph from 'graphology-operators/subgraph';
 import { connectedComponents } from 'graphology-components';
-import publications from './scopus.json';
-import nodeinfo from './nodeinfo.json';
+import publications from './publications.json';
+import obfuscatedNodeinfo from './nodeinfo.json';
+import { DEFAULT_SEED, deobfuscate } from './obfuscate';
+
+const nodeinfo = deobfuscate(obfuscatedNodeinfo, DEFAULT_SEED);
 
 export { nodeinfo };
 
-// The bundled publication file currently contains a JSON-encoded string.
 export function loadPublications() {
-  return typeof publications === 'string' ? JSON.parse(publications) : publications;
+  return deobfuscate(publications, DEFAULT_SEED);
 }
 
 export function oneName(name) {

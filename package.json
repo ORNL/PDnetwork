@@ -17,6 +17,7 @@
     "tabulator-tables": "^6.3.0"
   },
   "scripts": {
+    "build-dataset": "node scripts/build-dataset.js",
     "build-data": "node scripts/build-data.js",
     "build-nodeinfo": "node scripts/build-nodeinfo.js",
     "postinstall": "node scripts/build-nodeinfo.js",
