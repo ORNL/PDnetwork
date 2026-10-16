@@ -30,7 +30,7 @@ To build the website, install Node.js and npm, and run
 
 ```npm install```
 
-to install the dependencies. To run locally, the command is 
+to install the dependencies. To run a development server locally, the command is 
 
 ```npm start```.
 
