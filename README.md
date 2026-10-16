@@ -28,11 +28,7 @@ to compute the node layout for the new data (requires Python with packages, run 
 ## Building
 To build the website, install Node.js and npm, and run
 
-```npm install```
-
-to install the dependencies. To run a development server locally, the command is 
-
-```npm start```.
+```npm install```.
 
 To build the static files from source, the command is
 
