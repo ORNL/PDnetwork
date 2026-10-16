@@ -26,13 +26,15 @@ followed by
 to compute the node layout for the new data (requires Python with packages, run `python -m pip install -r scripts/requirements.txt` to install the dependencies).
 
 ## Building
-To build the website, install Node.js and npm, and run
+To build the website, install Node.js and npm, and first install the dependencies by
 
 ```npm install```.
 
-To build the static files from source, the command is
+Then, to build the static files from source, run the command
 
 ```npm run build```.
+
+This will create the website in the `dist/` folder.
 
 ## License
 PDnetwork is distributed under a [BSD 3-Clause license](LICENSE).
