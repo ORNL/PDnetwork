@@ -26,11 +26,11 @@ followed by
 to compute the node layout for the new data (requires Python with packages, run `python -m pip install -r scripts/requirements.txt` to install the dependencies).
 
 ## Building
-To build the website, install Node.js and npm, and first install the dependencies by
+To build the website, install Node.js and npm, and first install the dependencies by running
 
 ```npm install```.
 
-Then, to build the static files from source, run the command
+Then, to build the static files from source, run
 
 ```npm run build```.
 
