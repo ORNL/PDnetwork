@@ -10,7 +10,7 @@ If you use PDnetwork in your work, please cite the [Zenodo release](https://zeno
 ## Publications
 B. Dahal, P. Seleson, and J. Trageser, The evolution of the peridynamics co-authorship network, *Journal of Peridynamics and Nonlocal Modeling* 5 (2023): 311-355. https://doi.org/10.1007/s42102-022-00082-5 ([view-only version](https://rdcu.be/cRvai)).
 
-B. Dahal and P. Seleson, The evolution of the peridynamics community in its first quarter century, *arXiv Preprint* [arXiv:2607.01461](https://arxiv.org/abs/2607.01461) (2026).
+B. Dahal and P. Seleson, The evolution of the peridynamics community in its first quarter century, *Journal of Peridynamics and Nonlocal Modeling* 8 (2026): 11. https://doi.org/10.1007/s42102-026-00146-w ([Springer, view-only version](https://rdcu.be/9vsquNaYQ4sa)).
 
 ## Data
 Data from Scopus, Copyright Elsevier (2026). The data has been obfuscated for posting on GitHub (src/publications.json and src/nodeinfo.json) and is decoded in the browser. 
