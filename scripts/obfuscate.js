@@ -8,4 +8,13 @@ function readSeed(explicit = DEFAULT_SEED) {
   return seed
 }
 
-module.exports = { root, DEFAULT_SEED, readSeed, obfuscate, deobfuscate }
+// Removes "--out <folder>" from args and returns that folder, or src/ if it is not given.
+function readOutDir(args) {
+  const i = args.indexOf('--out')
+  if (i === -1) return path.join(root, 'src')
+  const [, dir] = args.splice(i, 2)
+  if (!dir) throw new Error('Pass a folder after --out')
+  return path.resolve(dir)
+}
+
+module.exports = { root, DEFAULT_SEED, readSeed, readOutDir, obfuscate, deobfuscate }
