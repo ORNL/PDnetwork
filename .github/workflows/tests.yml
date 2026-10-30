@@ -22,7 +22,14 @@ jobs:
           
       - run: npm ci
 
-      - run: python tests/check_ids.py
-      - run: python tests/compare_metrics.py
-      - run: python tests/obfuscation_pipeline.py
-      - run: python tests/check_site_files.py
+      - name: Check author IDs match
+        run: python tests/check_ids.py
+
+      - name: Compare metrics with networkx
+        run: python tests/compare_metrics.py
+
+      - name: Test the obfuscation pipeline
+        run: python tests/obfuscation_pipeline.py
+        
+      - name: Check site files are committed
+        run: python tests/check_site_files.py
