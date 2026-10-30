@@ -1,7 +1,8 @@
-// Usage: node scripts/build-nodeinfo.js [seed] [iterations] [--force]
+// Usage: node scripts/build-nodeinfo.js [seed] [iterations] [--force] [--out folder]
 //
 // Derives src/nodeinfo.json from the obfuscated src/publications.json. Runs
 // automatically on npm install, start, and build when it does not already exist.
+// --out reads and writes the two files in another folder instead of src/.
 // Output before obfuscating: { nodeId: [names, componentIndex, x, y, scopusAuthorId] }
 //   names           all spellings seen for the author, "; " joined; a numeric
 //                   prefix ("2; Name") disambiguates authors sharing a name
@@ -13,23 +14,24 @@ const path = require('path')
 const Graph = require('graphology')
 const { connectedComponents } = require('graphology-components')
 const { spawnSync } = require('child_process')
-const { root, readSeed, obfuscate, deobfuscate } = require('./obfuscate')
+const { root, readSeed, readOutDir, obfuscate, deobfuscate } = require('./obfuscate')
 
 const force = process.argv.includes('--force')
 const args = process.argv.slice(2).filter(arg => arg !== '--force')
+const outDir = readOutDir(args)
 const seed = readSeed(args[0])
 const iterations = Number(args[1] ?? process.env.LAYOUT_ITERATIONS ?? process.env.SPRING_LAYOUT_ITERATIONS ?? 100)
 if (!Number.isSafeInteger(iterations) || iterations < 1) {
   throw new Error('Layout iterations must be a positive integer')
 }
-const source = path.join(root, 'src/publications.json')
-const output = path.join(root, 'src/nodeinfo.json')
+const source = path.join(outDir, 'publications.json')
+const output = path.join(outDir, 'nodeinfo.json')
 if (fs.existsSync(output) && !force) {
-  console.log('src/nodeinfo.json already exists; reusing saved positions.')
+  console.log(`${path.relative(root, output)} already exists; reusing saved positions.`)
   process.exit(0)
 }
 if (!fs.existsSync(source)) {
-  console.error('src/publications.json is missing. Run: npm run build-data -- <scopus.csv>')
+  console.error(`${path.relative(root, source)} is missing. Run: npm run build-data -- <scopus.csv>`)
   process.exit(1)
 }
 const publications = deobfuscate(JSON.parse(fs.readFileSync(source, 'utf8')), seed)
@@ -93,4 +95,4 @@ components.forEach((nodes, componentIndex) => {
 })
 
 fs.writeFileSync(output, JSON.stringify(obfuscate(nodeinfo, seed)))
-console.log(`${graph.order} authors, ${graph.size} links, ${components.length} components -> src/nodeinfo.json (seed ${seed})`)
+console.log(`${graph.order} authors, ${graph.size} links, ${components.length} components -> ${path.relative(root, output)} (seed ${seed})`)

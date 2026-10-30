@@ -1,7 +1,7 @@
-// Usage: node scripts/build-data.js <scopus.csv> [seed]
+// Usage: node scripts/build-data.js <scopus.csv> [seed] [--out folder]
 //
 // Converts a Scopus CSV export into src/publications.json, the obfuscated file
-// the app loads. Expected CSV headers (extra columns are ignored):
+// the app loads. --out writes publications.json to another folder instead of src/. Expected CSV headers (extra columns are ignored):
 //   af  author full names, "; " separated
 //   si  Scopus author ids, "; " separated, aligned with af
 //   aa  affiliations (not stored)
@@ -17,11 +17,13 @@
 // scripts/build-nodeinfo.js, which runs on npm install, start, and build.
 const fs = require('fs')
 const path = require('path')
-const { root, readSeed, obfuscate } = require('./obfuscate')
+const { root, readSeed, readOutDir, obfuscate } = require('./obfuscate')
 
-const [, , csvPath, seedArg] = process.argv
+const args = process.argv.slice(2)
+const outDir = readOutDir(args)
+const [csvPath, seedArg] = args
 if (!csvPath) {
-  console.error('Usage: node scripts/build-data.js <scopus.csv> [seed]')
+  console.error('Usage: node scripts/build-data.js <scopus.csv> [seed] [--out folder]')
   process.exit(1)
 }
 const seed = readSeed(seedArg)
@@ -82,11 +84,11 @@ for (const record of records) {
   rowId += 1
 }
 
-const out = path.join(root, 'src/publications.json')
+const out = path.join(outDir, 'publications.json')
 fs.writeFileSync(out, JSON.stringify(obfuscate(publications, seed)))
-const nodeinfo = path.join(root, 'src/nodeinfo.json')
+const nodeinfo = path.join(outDir, 'nodeinfo.json')
 if (fs.existsSync(nodeinfo)) {
   fs.unlinkSync(nodeinfo)
-  console.log('Removed stale src/nodeinfo.json; it will be rebuilt on the next start or build.')
+  console.log(`Removed stale ${path.relative(root, nodeinfo)}; it will be rebuilt on the next start or build.`)
 }
-console.log(`${rowId} publications, ${nodeIndex.size} authors -> src/publications.json (seed ${seed})`)
+console.log(`${rowId} publications, ${nodeIndex.size} authors -> ${path.relative(root, out)} (seed ${seed})`)

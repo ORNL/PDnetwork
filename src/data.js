@@ -46,7 +46,8 @@ export function filterPublicationAuthors(publications, minYear, maxYear) {
 }
 
 // Build the weighted co-authorship graph and components without touching the UI.
-export function buildNetworks(ai) {
+// Author names and positions come from info, the site's nodeinfo unless given.
+export function buildNetworks(ai, info = nodeinfo) {
   let networks = []
 
   let nodes = []
@@ -112,16 +113,16 @@ export function buildNetworks(ai) {
   const graph = Graph.from(gdata, {type: "undirected"})
 
   graph.forEachNode( node => {
-    if (!nodeinfo[node]) {
+    if (!info[node]) {
       return
     }
 
-    graph.setNodeAttribute(node, 'label', oneName(nodeinfo[node][0]).trim())
-    graph.setNodeAttribute(node, 'fullname', nodeinfo[node][0])
-    graph.setNodeAttribute(node, 'x', nodeinfo[node][2])
-    graph.setNodeAttribute(node, 'y', nodeinfo[node][3])
-    nameToId[nodeinfo[node][0]] = node
-    nameToId[ oneName(nodeinfo[node][0]).trim()] = node
+    graph.setNodeAttribute(node, 'label', oneName(info[node][0]).trim())
+    graph.setNodeAttribute(node, 'fullname', info[node][0])
+    graph.setNodeAttribute(node, 'x', info[node][2])
+    graph.setNodeAttribute(node, 'y', info[node][3])
+    nameToId[info[node][0]] = node
+    nameToId[ oneName(info[node][0]).trim()] = node
   } );
 
   let components = connectedComponents(graph);
